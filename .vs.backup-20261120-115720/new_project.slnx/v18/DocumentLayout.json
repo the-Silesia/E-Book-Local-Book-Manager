@@ -1,0 +1,497 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\code-project\\vs-project\\new_project\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\zhang\\.copilot\\plans\\plan-release-settingspage.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}|MarkdownSecurePreview"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\.github\\copilot-instructions.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.github\\copilot-instructions.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2E288C08-4ED9-E15C-BF45-9CF695D7BA0D}|new_project\\new_project.csproj|e:\\code-project\\vs-project\\new_project\\new_project\\new_project.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{2E288C08-4ED9-E15C-BF45-9CF695D7BA0D}|new_project\\new_project.csproj|solutionrelative:new_project\\new_project.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\en-US\\Resources.resw||{81828910-B8B3-4D2B-99A3-067027C180C1}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Strings\\en-US\\Resources.resw||{81828910-B8B3-4D2B-99A3-067027C180C1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ListPage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\ListPage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderPage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\ReaderPage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\zh-Hans\\Resources.resw||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Strings\\zh-Hans\\Resources.resw||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\MainWindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\MainWindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\FavoritePageViewModel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\ViewModels\\FavoritePageViewModel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\HomePageViewModel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\ViewModels\\HomePageViewModel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderWindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\ReaderWindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\SettingsPage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\SettingsPage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\zh-Hans\\Resources.resw||{81828910-B8B3-4D2B-99A3-067027C180C1}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Strings\\zh-Hans\\Resources.resw||{81828910-B8B3-4D2B-99A3-067027C180C1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Services\\BookCoverService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Services\\BookCoverService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Services\\AppSettingsService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Services\\AppSettingsService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\SettingsPage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\SettingsPage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\FavoritePage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\FavoritePage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\HomePage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\HomePage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\SettingsPageViewModel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\ViewModels\\SettingsPageViewModel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\IReaderHost.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\IReaderHost.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\App.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\App.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\MainWindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\MainWindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Models\\Book.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Models\\Book.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderWindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\ReaderWindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderPage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\ReaderPage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Views\\HomePageConverters.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Views\\HomePageConverters.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\code-project\\vs-project\\new_project\\new_project\\Models\\Repository\\DataAccess.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:new_project\\Models\\Repository\\DataAccess.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 10,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:131:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:132:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "plan-release-settingspage.md [\u9884\u89C8]",
+              "DocumentMoniker": "C:\\Users\\zhang\\.copilot\\plans\\plan-release-settingspage.md",
+              "ToolTip": "C:\\Users\\zhang\\.copilot\\plans\\plan-release-settingspage.md [\u9884\u89C8]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-11-19T16:00:53.954Z",
+              "EditorCaption": " [\u9884\u89C8]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "new_project",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\new_project.csproj",
+              "RelativeDocumentMoniker": "new_project\\new_project.csproj",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\new_project.csproj",
+              "RelativeToolTip": "new_project\\new_project.csproj",
+              "ViewState": "AgIAAF4AAAAAAAAAAIBcwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-11-19T15:58:51.598Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Resources.resw",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\en-US\\Resources.resw",
+              "RelativeDocumentMoniker": "new_project\\Strings\\en-US\\Resources.resw",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\en-US\\Resources.resw",
+              "RelativeToolTip": "new_project\\Strings\\en-US\\Resources.resw",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001005|",
+              "WhenOpened": "2026-11-19T15:46:58.387Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ListPage.xaml",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ListPage.xaml",
+              "RelativeDocumentMoniker": "new_project\\Views\\ListPage.xaml",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ListPage.xaml",
+              "RelativeToolTip": "new_project\\Views\\ListPage.xaml",
+              "ViewState": "AgIAABkAAAAAAAAAAAAQwCsAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-11-19T15:24:27.923Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ReaderPage.xaml",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderPage.xaml",
+              "RelativeDocumentMoniker": "new_project\\Views\\ReaderPage.xaml",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderPage.xaml",
+              "RelativeToolTip": "new_project\\Views\\ReaderPage.xaml",
+              "ViewState": "AgIAAFoAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-11-19T15:24:27.877Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Resources.resw",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\zh-Hans\\Resources.resw",
+              "RelativeDocumentMoniker": "new_project\\Strings\\zh-Hans\\Resources.resw",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\zh-Hans\\Resources.resw",
+              "RelativeToolTip": "new_project\\Strings\\zh-Hans\\Resources.resw",
+              "ViewState": "AgIAAF0BAAAAAAAAAABDwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001005|",
+              "WhenOpened": "2026-11-19T15:18:37.201Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "new_project\\MainWindow.xaml",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\MainWindow.xaml",
+              "RelativeToolTip": "new_project\\MainWindow.xaml",
+              "ViewState": "AgIAACMAAAAAAAAAAABDwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-11-19T15:18:37.097Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "FavoritePageViewModel.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\FavoritePageViewModel.cs",
+              "RelativeDocumentMoniker": "new_project\\ViewModels\\FavoritePageViewModel.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\FavoritePageViewModel.cs",
+              "RelativeToolTip": "new_project\\ViewModels\\FavoritePageViewModel.cs",
+              "ViewState": "AgIAAAEAAAAAAAAAAABDwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T15:18:15.305Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "HomePageViewModel.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\HomePageViewModel.cs",
+              "RelativeDocumentMoniker": "new_project\\ViewModels\\HomePageViewModel.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\HomePageViewModel.cs",
+              "RelativeToolTip": "new_project\\ViewModels\\HomePageViewModel.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAMBVwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T15:18:15.26Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ReaderWindow.xaml",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderWindow.xaml",
+              "RelativeDocumentMoniker": "new_project\\Views\\ReaderWindow.xaml",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderWindow.xaml",
+              "RelativeToolTip": "new_project\\Views\\ReaderWindow.xaml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-11-19T15:12:03.024Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "SettingsPage.xaml.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\SettingsPage.xaml.cs",
+              "RelativeDocumentMoniker": "new_project\\Views\\SettingsPage.xaml.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\SettingsPage.xaml.cs",
+              "RelativeToolTip": "new_project\\Views\\SettingsPage.xaml.cs",
+              "ViewState": "AgIAAGoAAAAAAAAAAAAewAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T15:07:22.289Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "Resources.resw",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\zh-Hans\\Resources.resw",
+              "RelativeDocumentMoniker": "new_project\\Strings\\zh-Hans\\Resources.resw",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Strings\\zh-Hans\\Resources.resw",
+              "RelativeToolTip": "new_project\\Strings\\zh-Hans\\Resources.resw",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001005|",
+              "WhenOpened": "2026-11-19T15:04:18.389Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "BookCoverService.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Services\\BookCoverService.cs",
+              "RelativeDocumentMoniker": "new_project\\Services\\BookCoverService.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Services\\BookCoverService.cs",
+              "RelativeToolTip": "new_project\\Services\\BookCoverService.cs",
+              "ViewState": "AgIAACYAAAAAAAAAAAAowDMAAABQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T14:55:52.654Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "AppSettingsService.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Services\\AppSettingsService.cs",
+              "RelativeDocumentMoniker": "new_project\\Services\\AppSettingsService.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Services\\AppSettingsService.cs",
+              "RelativeToolTip": "new_project\\Services\\AppSettingsService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwv0cAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T14:53:32.744Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "SettingsPage.xaml",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\SettingsPage.xaml",
+              "RelativeDocumentMoniker": "new_project\\Views\\SettingsPage.xaml",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\SettingsPage.xaml",
+              "RelativeToolTip": "new_project\\Views\\SettingsPage.xaml",
+              "ViewState": "AgIAABAAAAAAAAAAAAArwB8AAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-11-19T14:25:20.272Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "FavoritePage.xaml.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\FavoritePage.xaml.cs",
+              "RelativeDocumentMoniker": "new_project\\Views\\FavoritePage.xaml.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\FavoritePage.xaml.cs",
+              "RelativeToolTip": "new_project\\Views\\FavoritePage.xaml.cs",
+              "ViewState": "AgIAAAoAAAAAAAAAAABSwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T13:54:10.661Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "HomePage.xaml.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\HomePage.xaml.cs",
+              "RelativeDocumentMoniker": "new_project\\Views\\HomePage.xaml.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\HomePage.xaml.cs",
+              "RelativeToolTip": "new_project\\Views\\HomePage.xaml.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAABSwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T13:54:10.594Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "SettingsPageViewModel.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\SettingsPageViewModel.cs",
+              "RelativeDocumentMoniker": "new_project\\ViewModels\\SettingsPageViewModel.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\ViewModels\\SettingsPageViewModel.cs",
+              "RelativeToolTip": "new_project\\ViewModels\\SettingsPageViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T13:52:44.35Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "IReaderHost.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\IReaderHost.cs",
+              "RelativeDocumentMoniker": "new_project\\Views\\IReaderHost.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\IReaderHost.cs",
+              "RelativeToolTip": "new_project\\Views\\IReaderHost.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T13:56:04.261Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "App.xaml.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\App.xaml.cs",
+              "RelativeDocumentMoniker": "new_project\\App.xaml.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\App.xaml.cs",
+              "RelativeToolTip": "new_project\\App.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T14:53:53.872Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "new_project\\MainWindow.xaml.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\MainWindow.xaml.cs",
+              "RelativeToolTip": "new_project\\MainWindow.xaml.cs",
+              "ViewState": "AgIAAPYAAAAAAAAAAAArwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T14:53:53.918Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "Book.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Models\\Book.cs",
+              "RelativeDocumentMoniker": "new_project\\Models\\Book.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Models\\Book.cs",
+              "RelativeToolTip": "new_project\\Models\\Book.cs",
+              "ViewState": "AgIAADEAAAAAAAAAAAAmwEUAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T14:15:38.67Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "ReaderWindow.xaml.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderWindow.xaml.cs",
+              "RelativeDocumentMoniker": "new_project\\Views\\ReaderWindow.xaml.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderWindow.xaml.cs",
+              "RelativeToolTip": "new_project\\Views\\ReaderWindow.xaml.cs",
+              "ViewState": "AgIAAAIAAAAAAAAAAIBMwBwAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T13:41:29.806Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "ReaderPage.xaml.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderPage.xaml.cs",
+              "RelativeDocumentMoniker": "new_project\\Views\\ReaderPage.xaml.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\ReaderPage.xaml.cs",
+              "RelativeToolTip": "new_project\\Views\\ReaderPage.xaml.cs",
+              "ViewState": "AgIAANIBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T12:55:14.479Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "HomePageConverters.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\HomePageConverters.cs",
+              "RelativeDocumentMoniker": "new_project\\Views\\HomePageConverters.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Views\\HomePageConverters.cs",
+              "RelativeToolTip": "new_project\\Views\\HomePageConverters.cs",
+              "ViewState": "AgIAAEkAAAAAAAAAAIBMwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T13:38:06.347Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "DataAccess.cs",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\new_project\\Models\\Repository\\DataAccess.cs",
+              "RelativeDocumentMoniker": "new_project\\Models\\Repository\\DataAccess.cs",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\new_project\\Models\\Repository\\DataAccess.cs",
+              "RelativeToolTip": "new_project\\Models\\Repository\\DataAccess.cs",
+              "ViewState": "AgIAADsBAAAAAAAAAAAAAFIBAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-19T13:11:51.76Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "copilot-instructions.md",
+              "DocumentMoniker": "E:\\code-project\\vs-project\\new_project\\.github\\copilot-instructions.md",
+              "RelativeDocumentMoniker": ".github\\copilot-instructions.md",
+              "ToolTip": "E:\\code-project\\vs-project\\new_project\\.github\\copilot-instructions.md",
+              "RelativeToolTip": ".github\\copilot-instructions.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-11-19T13:59:09.124Z"
+            }
+          ]
+        },
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

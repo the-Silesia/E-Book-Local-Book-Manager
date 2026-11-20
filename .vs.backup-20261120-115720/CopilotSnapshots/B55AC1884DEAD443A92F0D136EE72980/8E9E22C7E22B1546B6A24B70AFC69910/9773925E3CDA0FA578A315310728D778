@@ -1,0 +1,77 @@
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Windowing;
+using new_project.Models;
+using Microsoft.UI.Xaml.Navigation;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace new_project.Views;
+
+/// <summary>
+/// An empty window that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class ReaderWindow : Window, IReaderHost
+{
+    private const int MaxTitleLength = 40;
+    private readonly OverlappedPresenter _windowedPresenter;
+
+    public ReaderWindow(Book book)
+    {
+        InitializeComponent();
+        AppWindow.Resize(new Windows.Graphics.SizeInt32(1525, 1000));
+        AppWindow.SetIcon("Assets/icon.ico");
+        AppWindow.TitleBar.PreferredTheme = TitleBarTheme.UseDefaultAppMode;
+        _windowedPresenter = OverlappedPresenter.Create();
+        _windowedPresenter.PreferredMinimumWidth = 925;
+        _windowedPresenter.PreferredMinimumHeight = 600;
+        AppWindow.SetPresenter(_windowedPresenter);
+        Title = TruncateTitle(book.Title);
+        ReaderFrame.Navigate(
+            typeof(ReaderPage),
+            new ReaderPageNavigationParameter(book.Id, this));
+        Closed += ReaderWindow_Closed;
+    }
+
+    private async void ReaderWindow_Closed(object sender, WindowEventArgs args)
+    {
+        if (ReaderFrame.Content is ReaderPage readerPage)
+        {
+            await readerPage.SaveProgressOnCloseAsync();
+        }
+    }
+
+    private static string TruncateTitle(string title)
+    {
+        return title.Length <= MaxTitleLength
+            ? title
+            : string.Concat(title[..(MaxTitleLength - 1)], "…");
+    }
+
+    public void SetReaderTitle(string? title)
+    {
+        Title = TruncateTitle(title ?? string.Empty);
+    }
+
+    public bool ToggleReaderFullscreen()
+    {
+        if (AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen)
+        {
+            ExitReaderFullscreen();
+        }
+        else
+        {
+            AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+        }
+
+        return AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
+    }
+
+    public void ExitReaderFullscreen()
+    {
+        if (AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen)
+        {
+            AppWindow.SetPresenter(_windowedPresenter);
+        }
+    }
+}

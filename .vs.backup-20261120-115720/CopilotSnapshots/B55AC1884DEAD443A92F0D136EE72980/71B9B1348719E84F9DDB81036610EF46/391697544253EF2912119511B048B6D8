@@ -1,0 +1,61 @@
+﻿using System;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace new_project.Models;
+
+public partial class Book : ObservableObject
+{
+    //Id
+    public int Id { get; set; }
+    //标题
+    public string Title { get; set; }
+    //封面存储路径
+    public string? CoverPath { get; set; }
+    //阅读进度
+    public string? ReadingProgress { get; set; }
+    //添加时间
+    public DateTimeOffset DateAdded { get; set; }
+    //最后打开时间
+    public DateTimeOffset? DateLastOpened { get; set; }
+    //书籍路径
+    public string BookPath { get; set; }
+    //相对于授权来源文件夹的路径
+    public string RelativePath { get; set; }
+    //ZIP 内部条目路径；非 ZIP 书籍为空
+    public string? ArchiveEntryPath { get; set; }
+    //书籍来源文件夹的 FutureAccessList token
+    public string? SourceAccessToken { get; set; }
+    //封面相对于授权来源文件夹的路径
+    public string? CoverRelativePath { get; set; }
+    //ZIP 图片书的内部图片条目路径
+    public string? ArchiveImageEntryPathsJson { get; set; }
+    //书籍格式
+    public BookFormat Format { get; set; }
+    //是否收藏
+    [ObservableProperty]
+    public partial bool IsFavorite { get; set; }
+    public Book(
+        int id,
+        string title,
+        string bookPath,
+        BookFormat format = BookFormat.Text,
+        string? sourceAccessToken = null,
+        string relativePath = "")
+    {
+        Id = id;
+        Title = title;
+        DateAdded = DateTimeOffset.UtcNow;
+        BookPath = bookPath;
+        RelativePath = relativePath;
+        SourceAccessToken = sourceAccessToken;
+        Format = format;
+        ReadingProgress = "0";
+        IsFavorite = false;
+    }
+    [RelayCommand]
+    private void SetFavorite()
+    {
+        IsFavorite = !IsFavorite;
+    }
+}

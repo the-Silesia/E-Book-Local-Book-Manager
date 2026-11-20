@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace new_project.ViewModels;
+
+public enum ReaderOpenMode
+{
+    ReaderWindow,
+    MainWindow
+}
+
+internal class SettingsPageViewModel
+{
+    public ReaderOpenMode ReaderOpenMode { get; set; } = ReaderOpenMode.ReaderWindow;
+}

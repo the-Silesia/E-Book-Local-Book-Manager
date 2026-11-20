@@ -1,0 +1,31 @@
+﻿using Microsoft.UI.Xaml;
+using new_project.Models;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace new_project.Views;
+
+/// <summary>
+/// An empty window that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class ReaderWindow : Window
+{
+    private const int MaxTitleLength = 40;
+
+    public ReaderWindow(Book book)
+    {
+        InitializeComponent();
+        AppWindow.Resize(new Windows.Graphics.SizeInt32(1525, 1000));
+        AppWindow.SetIcon("../Assets/icon.ico");
+        Title = TruncateTitle(book.Title);
+        ReaderFrame.Navigate(typeof(ReaderPage), book.Id);
+    }
+
+    private static string TruncateTitle(string title)
+    {
+        return title.Length <= MaxTitleLength
+            ? title
+            : string.Concat(title.AsSpan(0, MaxTitleLength - 1), "…");
+    }
+}

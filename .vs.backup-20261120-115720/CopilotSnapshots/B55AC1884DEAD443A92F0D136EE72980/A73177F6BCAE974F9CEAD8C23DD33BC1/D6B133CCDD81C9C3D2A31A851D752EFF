@@ -1,0 +1,58 @@
+﻿using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml;
+using System;
+using System.Globalization;
+
+namespace new_project.Views;
+
+public sealed class FavoriteGlyphConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        return value is true ? "\uE735" : "\uE734";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotSupportedException();
+    }
+}
+
+public sealed class ReadingProgressVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        var progress = value is double doubleProgress
+            ? doubleProgress
+            : double.TryParse(value?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+                ? parsed
+                : 0d;
+
+        return progress > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotSupportedException();
+    }
+}
+
+public sealed class ReadingProgressConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is double progress)
+        {
+            return Math.Clamp(progress, 0, 1) * 100;
+        }
+
+        return double.TryParse(value?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            ? Math.Clamp(parsed, 0, 1) * 100
+            : 0d;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotSupportedException();
+    }
+}

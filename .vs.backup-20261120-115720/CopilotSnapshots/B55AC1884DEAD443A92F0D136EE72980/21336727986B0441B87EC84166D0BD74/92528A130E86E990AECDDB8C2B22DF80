@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="new_project.Views.FavoritePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:new_project.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    NavigationCacheMode="Enabled">
+
+    <!--空状态提示-->
+    <Grid x:Name="FavoritePage_nullContent_Info" Visibility="Visible">
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock x:Uid="FavoritePage_nullContent_Info_Text" Style="{StaticResource TitleLargeTextBlockStyle}" Margin="12" HorizontalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</Page>

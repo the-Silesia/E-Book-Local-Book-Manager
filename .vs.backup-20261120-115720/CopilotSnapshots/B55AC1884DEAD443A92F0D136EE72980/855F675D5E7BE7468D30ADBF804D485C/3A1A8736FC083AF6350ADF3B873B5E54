@@ -1,0 +1,58 @@
+﻿using new_project.Models;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Linq;
+
+namespace new_project.ViewModels;
+
+public sealed class FavoritePageViewModel
+{
+    private readonly BooksViewModel _booksViewModel;
+
+    public ObservableCollection<Book> FavoriteBooks { get; } = new();
+
+    public FavoritePageViewModel(BooksViewModel booksViewModel)
+    {
+        _booksViewModel = booksViewModel;
+        _booksViewModel.Books.CollectionChanged += Books_CollectionChanged;
+        Refresh();
+    }
+
+    public void Refresh()
+    {
+        foreach (var book in _booksViewModel.Books)
+        {
+            book.PropertyChanged -= Book_PropertyChanged;
+        }
+
+        foreach (var book in FavoriteBooks)
+        {
+            book.PropertyChanged -= Book_PropertyChanged;
+        }
+
+        FavoriteBooks.Clear();
+
+        foreach (var book in _booksViewModel.Books)
+        {
+            book.PropertyChanged += Book_PropertyChanged;
+            if (book.IsFavorite)
+            {
+                FavoriteBooks.Add(book);
+            }
+        }
+    }
+
+    private void Books_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        Refresh();
+    }
+
+    private void Book_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Book.IsFavorite))
+        {
+            Refresh();
+        }
+    }
+}

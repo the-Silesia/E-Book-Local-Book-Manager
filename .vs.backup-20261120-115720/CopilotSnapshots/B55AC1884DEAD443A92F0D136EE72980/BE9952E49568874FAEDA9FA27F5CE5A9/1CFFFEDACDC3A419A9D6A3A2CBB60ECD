@@ -1,0 +1,33 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+
+namespace new_project.Models;
+
+public partial class BookList : ObservableObject
+{
+    public int Id { get; set; }
+
+    //书单列表
+    public ObservableCollection<Book> Books { get; } = new();
+    //书单显式名称
+    public string ListName { get; set; }
+    //书籍数目
+    public int BookNum => Books.Count;
+    //书单所在目录
+    public string BookListPath { get; set; }
+    //文件夹 FutureAccessList 授权 token
+    public string? FutureAccessToken { get; set; }
+
+    public BookList(string path, string name)
+    {
+        BookListPath = path;
+        ListName = name;
+        Books.CollectionChanged += Books_CollectionChanged;
+    }
+
+    private void Books_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(BookNum));
+    }
+}

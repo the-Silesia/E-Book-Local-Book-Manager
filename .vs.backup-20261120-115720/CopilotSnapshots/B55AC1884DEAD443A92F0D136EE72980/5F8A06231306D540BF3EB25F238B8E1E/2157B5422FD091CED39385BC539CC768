@@ -1,0 +1,121 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+using new_project.Models;
+using new_project.ViewModels;
+using System.Threading.Tasks;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace new_project.Views;
+
+/// <summary>
+/// An empty page that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class FavoritePage : Page
+{
+    private BooksViewModel ViewModel => App.LibraryViewModel;
+    private FavoritePageViewModel FavoriteViewModel { get; }
+    private readonly ResourceLoader _resourceLoader = ResourceLoader.GetForViewIndependentUse();
+
+    public FavoritePage()
+    {
+        InitializeComponent();
+        FavoriteViewModel = new FavoritePageViewModel(ViewModel);
+        FavoriteViewModel.FavoriteBooks.CollectionChanged += FavoriteBooks_CollectionChanged;
+        FavoriteGridView.DataContext = FavoriteViewModel;
+    }
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+
+        try
+        {
+            await ViewModel.LoadAsync();
+            FavoriteViewModel.Refresh();
+            UpdateViewState();
+        }
+        catch (Exception exception)
+        {
+            await ShowErrorAsync(exception.Message);
+        }
+    }
+
+    private void FavoriteGridView_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is Book book)
+        {
+            Frame?.Navigate(typeof(ReaderPage), book.Id);
+        }
+    }
+
+    private async void FavoriteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not Book book)
+        {
+            return;
+        }
+
+        try
+        {
+            await ViewModel.SetFavoriteAsync(book, false);
+            FavoriteViewModel.Refresh();
+            UpdateViewState();
+        }
+        catch (Exception exception)
+        {
+            await ShowErrorAsync(exception.Message);
+        }
+    }
+
+    private void UpdateViewState()
+    {
+        var hasFavorites = FavoriteViewModel.FavoriteBooks.Count > 0;
+        FavoritePage_nullContent_Info.Visibility = hasFavorites
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        FavoritePageContent.Visibility = hasFavorites
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void FavoriteBooks_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        UpdateViewState();
+    }
+
+    private async Task ShowErrorAsync(string message)
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = GetString("HomePage_ContentDialog_ImportError_Title"),
+            Content = message,
+            CloseButtonText = GetString("HomePage_ContentDialog_ImportError_CloseButtonText")
+        };
+        await dialog.ShowAsync();
+    }
+
+    private string GetString(string resourceKey)
+    {
+        return _resourceLoader.GetString(resourceKey);
+    }
+}

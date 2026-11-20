@@ -1,0 +1,222 @@
+﻿using new_project.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Threading.Tasks;
+using Windows.Storage;
+
+namespace new_project.Services;
+
+public sealed class BookScanner
+{
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp"
+    };
+
+    private static readonly HashSet<string> DocumentExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".txt",
+        ".pdf",
+        ".epub"
+    };
+
+    private readonly FolderAccessService _folderAccessService = new();
+
+    public async Task<IReadOnlyList<BookScanResult>> ScanAsync(
+        StorageFolder folder,
+        string sourceAccessToken)
+    {
+        var results = new List<BookScanResult>();
+        await ScanDirectoryAsync(folder, results, sourceAccessToken, string.Empty, null);
+
+        var childDirectories = (await folder.GetFoldersAsync())
+            .OrderBy(child => child.Name, StringComparer.OrdinalIgnoreCase);
+        foreach (var childDirectory in childDirectories)
+        {
+            await ScanDirectoryAsync(
+                childDirectory,
+                results,
+                sourceAccessToken,
+                childDirectory.Name,
+                null);
+        }
+
+        return results;
+    }
+
+    private async Task ScanDirectoryAsync(
+        StorageFolder directory,
+        List<BookScanResult> results,
+        string sourceAccessToken,
+        string relativeDirectoryPath,
+        string? titleOverride)
+    {
+        var files = (await directory.GetFilesAsync())
+            .OrderBy(file => file.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var imageFiles = new List<StorageFile>();
+
+        foreach (var file in files)
+        {
+            var extension = file.FileType;
+            var relativePath = CombineRelativePath(relativeDirectoryPath, file.Name);
+
+            if (ImageExtensions.Contains(extension))
+            {
+                imageFiles.Add(file);
+                continue;
+            }
+
+            if (DocumentExtensions.Contains(extension))
+            {
+                var fallbackTitle = Path.GetFileNameWithoutExtension(file.Name);
+                var title = await BookMetadataReader.ReadTitleAsync(file, fallbackTitle);
+                results.Add(new BookScanResult
+                {
+                    Format = GetDocumentFormat(extension),
+                    Title = title,
+                    BookPath = file.Path,
+                    RelativePath = relativePath,
+                    SourceAccessToken = sourceAccessToken
+                });
+                continue;
+            }
+
+            if (extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                await ScanArchiveAsync(file, results);
+            }
+        }
+
+        if (imageFiles.Count > 0)
+        {
+            var imageRelativePaths = imageFiles
+                .Select(file => CombineRelativePath(relativeDirectoryPath, file.Name))
+                .ToArray();
+            var fallbackTitle = titleOverride ?? directory.Name;
+            results.Add(new BookScanResult
+            {
+                Format = BookFormat.ImageCollection,
+                Title = fallbackTitle,
+                BookPath = directory.Path,
+                RelativePath = relativeDirectoryPath,
+                SourceAccessToken = sourceAccessToken,
+                CoverPath = imageFiles[0].Path,
+                CoverRelativePath = imageRelativePaths[0],
+                ImagePaths = imageFiles.Select(file => file.Path).ToArray(),
+                ImageRelativePaths = imageRelativePaths
+            });
+        }
+    }
+
+    private async Task ScanArchiveAsync(StorageFile archiveFile, List<BookScanResult> results)
+    {
+        var cacheRoot = await ApplicationData.Current.LocalCacheFolder.CreateFolderAsync(
+            "ImportedBooks",
+            CreationCollisionOption.OpenIfExists);
+        var extractionFolder = await cacheRoot.CreateFolderAsync(
+            Guid.NewGuid().ToString("N"),
+            CreationCollisionOption.FailIfExists);
+
+        await ExtractArchiveAsync(archiveFile, extractionFolder);
+        var extractionToken = _folderAccessService.AddToFutureAccessList(extractionFolder);
+
+        await ScanDirectoryAsync(
+            extractionFolder,
+            results,
+            extractionToken,
+            string.Empty,
+            Path.GetFileNameWithoutExtension(archiveFile.Name));
+
+        var childDirectories = (await extractionFolder.GetFoldersAsync())
+            .OrderBy(child => child.Name, StringComparer.OrdinalIgnoreCase);
+        foreach (var childDirectory in childDirectories)
+        {
+            await ScanDirectoryAsync(
+                childDirectory,
+                results,
+                extractionToken,
+                childDirectory.Name,
+                null);
+        }
+    }
+
+    private static async Task ExtractArchiveAsync(StorageFile archiveFile, StorageFolder extractionFolder)
+    {
+        await using var inputStream = await archiveFile.OpenStreamForReadAsync();
+        using var archive = new ZipArchive(inputStream, ZipArchiveMode.Read);
+
+        foreach (var entry in archive.Entries)
+        {
+            var segments = SplitArchivePath(entry.FullName);
+            if (segments.Count == 0)
+            {
+                continue;
+            }
+
+            var targetFolder = extractionFolder;
+            for (var index = 0; index < segments.Count - 1; index++)
+            {
+                targetFolder = await targetFolder.CreateFolderAsync(
+                    segments[index],
+                    CreationCollisionOption.OpenIfExists);
+            }
+
+            if (entry.FullName.EndsWith("/", StringComparison.Ordinal)
+                || entry.FullName.EndsWith("\\", StringComparison.Ordinal))
+            {
+                await targetFolder.CreateFolderAsync(
+                    segments[^1],
+                    CreationCollisionOption.OpenIfExists);
+                continue;
+            }
+
+            var targetFile = await targetFolder.CreateFileAsync(
+                segments[^1],
+                CreationCollisionOption.ReplaceExisting);
+            await using var entryStream = entry.Open();
+            await using var outputStream = await targetFile.OpenStreamForWriteAsync();
+            await entryStream.CopyToAsync(outputStream);
+        }
+    }
+
+    private static IReadOnlyList<string> SplitArchivePath(string entryPath)
+    {
+        var segments = entryPath
+            .Replace('\\', '/')
+            .Split('/', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var segment in segments)
+        {
+            if (segment is "." or ".." || segment.Contains(':'))
+            {
+                throw new InvalidDataException("压缩包包含无效路径。");
+            }
+        }
+
+        return segments;
+    }
+
+    private static string CombineRelativePath(string directoryPath, string name)
+    {
+        return string.IsNullOrEmpty(directoryPath)
+            ? name
+            : $"{directoryPath}/{name}";
+    }
+
+    private static BookFormat GetDocumentFormat(string extension)
+    {
+        return extension.ToLowerInvariant() switch
+        {
+            ".txt" => BookFormat.Text,
+            ".pdf" => BookFormat.Pdf,
+            ".epub" => BookFormat.Epub,
+            _ => BookFormat.Unknown
+        };
+    }
+}

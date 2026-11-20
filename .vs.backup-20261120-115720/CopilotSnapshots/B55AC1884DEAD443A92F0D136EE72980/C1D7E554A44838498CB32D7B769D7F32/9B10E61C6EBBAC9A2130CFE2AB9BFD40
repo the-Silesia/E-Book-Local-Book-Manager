@@ -1,0 +1,84 @@
+﻿using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+
+namespace new_project.Services;
+
+public static class BookMetadataReader
+{
+    public static async Task<string> ReadTitleAsync(string path, string fallbackTitle)
+    {
+        var extension = Path.GetExtension(path);
+        if (extension.Equals(".epub", System.StringComparison.OrdinalIgnoreCase))
+        {
+            var title = await ReadEpubTitleAsync(path);
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                return title;
+            }
+        }
+        else if (extension.Equals(".pdf", System.StringComparison.OrdinalIgnoreCase))
+        {
+            var title = await ReadPdfTitleAsync(path);
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                return title;
+            }
+        }
+
+        return fallbackTitle;
+    }
+
+    private static async Task<string?> ReadEpubTitleAsync(string path)
+    {
+        await using var stream = File.OpenRead(path);
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        var containerEntry = archive.GetEntry("META-INF/container.xml");
+        if (containerEntry is null)
+        {
+            return null;
+        }
+
+        using var containerStream = containerEntry.Open();
+        var container = await XDocument.LoadAsync(containerStream, LoadOptions.None, default);
+        var rootFile = container.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "rootfile")?
+            .Attribute("full-path")?.Value;
+        if (string.IsNullOrWhiteSpace(rootFile))
+        {
+            return null;
+        }
+
+        var packageEntry = archive.GetEntry(rootFile.Replace('\\', '/'));
+        if (packageEntry is null)
+        {
+            return null;
+        }
+
+        using var packageStream = packageEntry.Open();
+        var package = await XDocument.LoadAsync(packageStream, LoadOptions.None, default);
+        return package.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "title")?.Value.Trim();
+    }
+
+    private static async Task<string?> ReadPdfTitleAsync(string path)
+    {
+        var bytes = await File.ReadAllBytesAsync(path);
+        var content = Encoding.Latin1.GetString(bytes);
+        var marker = "/Title";
+        var markerIndex = content.IndexOf(marker, System.StringComparison.Ordinal);
+        if (markerIndex < 0)
+        {
+            return null;
+        }
+
+        var start = content.IndexOf('(', markerIndex + marker.Length);
+        var end = start < 0 ? -1 : content.IndexOf(')', start + 1);
+        return start >= 0 && end > start
+            ? content[(start + 1)..end].Trim()
+            : null;
+    }
+}

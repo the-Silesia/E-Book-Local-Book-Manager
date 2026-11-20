@@ -1,0 +1,248 @@
+﻿using Microsoft.UI.Windowing;
+using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+using new_project.Views;
+using new_project.Models;
+using new_project.ViewModels;
+using new_project.Services;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using Windows.ApplicationModel.Resources;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace new_project
+{
+    /// <summary>
+    /// An empty window that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    public sealed partial class MainWindow : Window, IReaderHost
+    {
+        private const int MaxReaderTitleLength = 40;
+        private static readonly ResourceLoader ResourceLoader = ResourceLoader.GetForViewIndependentUse();
+        private readonly OverlappedPresenter _windowedPresenter;
+        private readonly List<ReaderWindow> _readerWindows = [];
+
+        public SettingsPageViewModel Settings { get; } = new();
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            Title = ResourceLoader.GetString("mainWindow_Title");
+            mainWindowTitleBar.Subtitle = string.Empty;
+            AppWindow.Resize(new Windows.Graphics.SizeInt32(1525, 1000));
+            AppWindow.SetIcon("Assets/icon.ico");
+            ApplyBackdrop(AppSettingsService.Current.Backdrop);
+            this.ExtendsContentIntoTitleBar = true;
+            this.SetTitleBar(mainWindowTitleBar);
+            if (this.ExtendsContentIntoTitleBar)
+            {
+                //标题栏按钮适应TitleBar高度
+                AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+            }
+            _windowedPresenter = OverlappedPresenter.Create();
+            _windowedPresenter.PreferredMinimumWidth = 925;
+            _windowedPresenter.PreferredMinimumHeight = 600;
+            AppWindow.SetPresenter(_windowedPresenter);
+            mainWindowNavFrame.Navigated += MainWindowNavFrame_Navigated;
+            //初始化导航
+            mainWindowNavFrame.Navigate(typeof(HomePage));
+        }
+
+        public void SetTheme(AppThemeMode theme)
+        {
+            if (Content is FrameworkElement root)
+            {
+                root.RequestedTheme = theme switch
+                {
+                    AppThemeMode.Light => ElementTheme.Light,
+                    AppThemeMode.Dark => ElementTheme.Dark,
+                    _ => ElementTheme.Default
+                };
+            }
+
+            AppSettingsService.Current.Theme = theme;
+        }
+
+        public void ApplyBackdrop(AppBackdropMode backdrop)
+        {
+            SystemBackdrop = backdrop switch
+            {
+                AppBackdropMode.MicaAlt => new MicaBackdrop { Kind = MicaKind.BaseAlt },
+                AppBackdropMode.Acrylic => new DesktopAcrylicBackdrop(),
+                AppBackdropMode.AcrylicThin => new DesktopAcrylicBackdrop(),
+                _ => new MicaBackdrop { Kind = MicaKind.Base }
+            };
+            AppSettingsService.Current.Backdrop = backdrop;
+        }
+
+        public void SetTitleBarSubtitle(string? subtitle)
+        {
+            mainWindowTitleBar.Subtitle = subtitle ?? string.Empty;
+        }
+
+        public void OpenBook(Book book)
+        {
+            if (Settings.ReaderOpenMode == ReaderOpenMode.ReaderWindow)
+            {
+                var readerWindow = new ReaderWindow(book);
+                _readerWindows.Add(readerWindow);
+                readerWindow.Closed += ReaderWindow_Closed;
+                readerWindow.Activate();
+                return;
+            }
+
+            mainWindowNavFrame.Navigate(
+                typeof(ReaderPage),
+                new ReaderPageNavigationParameter(book.Id, this));
+        }
+
+        public void SetReaderTitle(string? title)
+        {
+            SetTitleBarSubtitle(TruncateReaderTitle(title));
+        }
+
+        public bool ToggleReaderFullscreen()
+        {
+            return ToggleFullScreen();
+        }
+
+        public void ExitReaderFullscreen()
+        {
+            ExitFullScreen();
+        }
+
+        private static string? TruncateReaderTitle(string? title)
+        {
+            if (string.IsNullOrEmpty(title) || title.Length <= MaxReaderTitleLength)
+            {
+                return title;
+            }
+
+            return string.Concat(title[..(MaxReaderTitleLength - 1)], "…");
+        }
+
+        private void ReaderWindow_Closed(object sender, WindowEventArgs args)
+        {
+            if (sender is ReaderWindow readerWindow)
+            {
+                readerWindow.Closed -= ReaderWindow_Closed;
+                _readerWindows.Remove(readerWindow);
+            }
+        }
+
+        public bool IsFullScreen => AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
+
+        public bool ToggleFullScreen()
+        {
+            if (IsFullScreen)
+            {
+                ExitFullScreen();
+            }
+            else
+            {
+                AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+                SetReaderShellVisibility(false);
+            }
+
+            return IsFullScreen;
+        }
+
+        public void ExitFullScreen()
+        {
+            if (IsFullScreen)
+            {
+                AppWindow.SetPresenter(_windowedPresenter);
+            }
+
+            SetReaderShellVisibility(true);
+        }
+
+        private void SetReaderShellVisibility(bool isVisible)
+        {
+            mainWindowTitleBar.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            mainWindowNavView.IsPaneVisible = isVisible;
+        }
+
+        private void MainWindowTitleBar_BackRequested(TitleBar sender, object args)
+        {
+            if (mainWindowNavFrame.CanGoBack)
+            {
+                mainWindowNavFrame.GoBack();
+            }
+        }
+
+        private void MainWindowTitleBar_PaneToggleRequested(TitleBar sender, object args)
+        {
+            mainWindowNavView.IsPaneOpen = !mainWindowNavView.IsPaneOpen;
+        }
+
+        private void mainWindowNavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+        {
+            if (args.IsSettingsInvoked)
+            {
+                if (mainWindowNavFrame.CurrentSourcePageType != typeof(SettingsPage))
+                {
+                    mainWindowNavFrame.Navigate(typeof(SettingsPage), null, args.RecommendedNavigationTransitionInfo);
+                }
+                return;
+            }
+            if(args.InvokedItemContainer is NavigationViewItem item)
+            {
+                var pageType = item.Tag?.ToString() switch
+                {
+                    "Home" => typeof(HomePage),
+                    "Collection" => typeof(FavoritePage),
+                    "List" => typeof(ListPage),
+                    _ => null
+                };
+                if (pageType != null && mainWindowNavFrame.CurrentSourcePageType != pageType)
+                {
+                    mainWindowNavFrame.Navigate(pageType, null, args.RecommendedNavigationTransitionInfo);
+                }
+            }
+        }
+        private void MainWindowNavFrame_Navigated(object sender, NavigationEventArgs e)
+        {
+            //更新标题栏回退按钮可见性
+            mainWindowTitleBar.IsBackButtonVisible = mainWindowNavFrame.CanGoBack;
+            NavigationViewItem? targetItem = null;
+            if (e.SourcePageType == typeof(HomePage))
+                targetItem = FindMenuItemByTag("Home");
+            else if (e.SourcePageType == typeof(FavoritePage))
+                targetItem = FindMenuItemByTag("Collection");
+            else if (e.SourcePageType == typeof(ListPage))
+                targetItem = FindMenuItemByTag("List");
+            else if (e.SourcePageType == typeof(SettingsPage))
+            {
+                mainWindowNavView.SelectedItem = mainWindowNavView.SettingsItem;
+                return;
+            }
+            if (targetItem != null)
+            {
+                mainWindowNavView.SelectedItem = targetItem;
+            }
+        }
+        private NavigationViewItem? FindMenuItemByTag(string tag)
+        {
+            foreach (var item in mainWindowNavView.MenuItems)
+            {
+                if (item is NavigationViewItem navItem && navItem.Tag?.ToString() == tag)
+                    return navItem;
+            }
+            return null;
+        }
+    }
+}

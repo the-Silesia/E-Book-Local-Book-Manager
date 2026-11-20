@@ -1,0 +1,364 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using new_project.Models;
+using new_project.Models.Repository;
+using new_project.Services;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.Resources;
+using Windows.Storage;
+
+namespace new_project.ViewModels;
+
+public partial class BooksViewModel : ObservableObject
+{
+    private readonly BookScanner _bookScanner = new();
+    private readonly BookCoverService _bookCoverService = new();
+    private readonly FolderAccessService _folderAccessService = new();
+    private readonly ResourceLoader _resourceLoader = ResourceLoader.GetForViewIndependentUse();
+    private readonly SemaphoreSlim _coverGenerationGate = new(2, 2);
+
+    public ObservableCollection<Book> Books { get; } = new();
+    public ObservableCollection<BookList> BookLists { get; } = new();
+
+    [ObservableProperty]
+    public partial bool IsLoading { get; set; }
+
+    [ObservableProperty]
+    public partial bool HasBooks { get; set; }
+
+    [ObservableProperty]
+    public partial bool HasBookLists { get; set; }
+
+    public async Task LoadAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        IsLoading = true;
+        try
+        {
+            await ReloadCollectionsAsync();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    public async Task<IReadOnlyList<BookScanResult>> ScanBookListAsync(
+        StorageFolder folder,
+        string futureAccessToken)
+    {
+        if (string.IsNullOrWhiteSpace(futureAccessToken))
+        {
+            throw new InvalidOperationException(GetString("BooksViewModel_Error_SaveFolderAccess"));
+        }
+
+        var scanResults = await _bookScanner.ScanAsync(folder, futureAccessToken);
+        if (scanResults.Count == 0)
+        {
+            throw new InvalidOperationException(string.Format(
+                GetString("BooksViewModel_Error_NoBooksFound"),
+                Environment.NewLine,
+                folder.Path));
+        }
+
+        return scanResults;
+    }
+
+    public async Task<BookList> ImportBookListAsync(
+        StorageFolder folder,
+        string futureAccessToken,
+        IReadOnlyList<BookScanResult> scanResults)
+    {
+        if (string.IsNullOrWhiteSpace(futureAccessToken))
+        {
+            throw new InvalidOperationException(GetString("BooksViewModel_Error_SaveFolderAccess"));
+        }
+
+        if (scanResults.Count == 0)
+        {
+            throw new InvalidOperationException(string.Format(
+                GetString("BooksViewModel_Error_NoBooksFound"),
+                Environment.NewLine,
+                folder.Path));
+        }
+
+        var bookList = await DataAccess.AddOrGetBookListAsync(folder.Path, folder.Name, futureAccessToken);
+        await UpdateBookListAccessTokenAsync(bookList, futureAccessToken);
+        await AddScannedBooksToListAsync(bookList, scanResults);
+        await ReloadCollectionsAsync();
+        QueueCoverGeneration(scanResults);
+        return bookList;
+    }
+
+    public async Task RefreshBookListsAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        IsLoading = true;
+        try
+        {
+            var pendingCoverResults = new List<BookScanResult>();
+            foreach (var bookList in BookLists.ToArray())
+            {
+                var folder = await _folderAccessService.TryGetFolderAsync(bookList.FutureAccessToken);
+                if (folder is null || string.IsNullOrWhiteSpace(bookList.FutureAccessToken))
+                {
+                    continue;
+                }
+
+                var scanResults = await _bookScanner.ScanAsync(folder, bookList.FutureAccessToken);
+                await AddScannedBooksToListAsync(bookList, scanResults);
+
+                var scannedBookIds = await GetBookIdsAsync(bookList, scanResults);
+                await DataAccess.SynchronizeBookListItemsAsync(bookList.Id, scannedBookIds);
+                pendingCoverResults.AddRange(scanResults);
+            }
+
+            await ReloadCollectionsAsync();
+            QueueCoverGeneration(pendingCoverResults);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void QueueCoverGeneration(IReadOnlyList<BookScanResult> scanResults)
+    {
+        foreach (var scanResult in scanResults)
+        {
+            var book = Books.FirstOrDefault(candidate =>
+                string.Equals(candidate.BookPath, GetStorageKey(scanResult), StringComparison.OrdinalIgnoreCase)
+                && string.Equals(candidate.ArchiveEntryPath, scanResult.ArchiveEntryPath, StringComparison.OrdinalIgnoreCase));
+            if (book is not null)
+            {
+                _ = GenerateCoverInBackgroundAsync(book, scanResult);
+            }
+        }
+    }
+
+    private async Task GenerateCoverInBackgroundAsync(Book book, BookScanResult scanResult)
+    {
+        try
+        {
+            var coverPath = await GenerateCoverAsync(scanResult);
+            if (coverPath is null)
+            {
+                return;
+            }
+
+            await DataAccess.UpdateBookCoverPathAsync(book.Id, coverPath);
+            book.CoverPath = coverPath;
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task<string?> GenerateCoverAsync(BookScanResult scanResult)
+    {
+        await _coverGenerationGate.WaitAsync();
+        try
+        {
+            if (scanResult.Format == BookFormat.ImageCollection
+                && scanResult.ArchiveImageEntryPaths.Count == 0)
+            {
+                var folder = await TryGetFolderAsync(
+                    scanResult.SourceAccessToken,
+                    scanResult.RelativePath);
+                return folder is null
+                    ? null
+                    : await _bookCoverService.CreateImageFolderCoverAsync(folder);
+            }
+
+            var file = await _folderAccessService.TryGetFileAsync(
+                scanResult.SourceAccessToken,
+                scanResult.RelativePath);
+            if (file is null)
+            {
+                return null;
+            }
+
+            return scanResult.Format switch
+            {
+                BookFormat.Pdf => await _bookCoverService.CreatePdfCoverAsync(file),
+                BookFormat.Epub => await _bookCoverService.CreateEpubCoverAsync(file),
+                BookFormat.ImageCollection => await _bookCoverService.CreateZipCoverAsync(file),
+                _ => null
+            };
+        }
+        finally
+        {
+            _coverGenerationGate.Release();
+        }
+    }
+
+    private async Task<StorageFolder?> TryGetFolderAsync(
+        string? folderToken,
+        string relativePath)
+    {
+        var folder = await _folderAccessService.TryGetFolderAsync(folderToken);
+        if (folder is null)
+        {
+            return null;
+        }
+
+        foreach (var segment in relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            folder = await folder.GetFolderAsync(segment);
+        }
+
+        return folder;
+    }
+
+    private static string GetStorageKey(BookScanResult scanResult)
+    {
+        return string.IsNullOrWhiteSpace(scanResult.ArchiveEntryPath)
+            ? scanResult.BookPath
+            : $"{scanResult.BookPath}|{scanResult.ArchiveEntryPath}";
+    }
+
+    public async Task RenameBookListAsync(BookList bookList, string listName)
+    {
+        var normalizedName = listName.Trim();
+        if (normalizedName.Length == 0)
+        {
+            throw new ArgumentException(GetString("BooksViewModel_Error_EmptyBookListName"), nameof(listName));
+        }
+
+        await DataAccess.UpdateBookListNameAsync(bookList.Id, normalizedName);
+        bookList.ListName = normalizedName;
+    }
+
+    public async Task DeleteBookListAsync(BookList bookList)
+    {
+        await DataAccess.DeleteBookListAsync(bookList.Id);
+        BookLists.Remove(bookList);
+
+        var remainingBookIds = BookLists
+            .SelectMany(bookListItem => bookListItem.Books)
+            .Select(book => book.Id)
+            .ToHashSet();
+        for (var index = Books.Count - 1; index >= 0; index--)
+        {
+            if (!remainingBookIds.Contains(Books[index].Id))
+            {
+                Books.RemoveAt(index);
+            }
+        }
+
+        HasBooks = Books.Count > 0;
+        HasBookLists = BookLists.Count > 0;
+    }
+
+    public async Task SetFavoriteAsync(Book book, bool isFavorite)
+    {
+        var previousValue = book.IsFavorite;
+        book.IsFavorite = isFavorite;
+        try
+        {
+            await DataAccess.UpdateFavoriteAsync(book.Id, isFavorite);
+        }
+        catch
+        {
+            book.IsFavorite = previousValue;
+            throw;
+        }
+    }
+
+    private string GetString(string resourceKey)
+    {
+        return _resourceLoader.GetString(resourceKey);
+    }
+
+    private async Task AddScannedBooksToListAsync(
+        BookList bookList,
+        IReadOnlyList<BookScanResult> scanResults)
+    {
+        foreach (var scanResult in scanResults)
+        {
+            var book = await DataAccess.AddOrGetBookAsync(
+                scanResult.Title,
+                scanResult.BookPath,
+                scanResult.Format,
+                scanResult.CoverPath,
+                scanResult.RelativePath,
+                scanResult.SourceAccessToken,
+                scanResult.CoverRelativePath,
+                scanResult.ArchiveEntryPath,
+                scanResult.ArchiveImageEntryPaths.Count == 0
+                    ? null
+                    : JsonSerializer.Serialize(scanResult.ArchiveImageEntryPaths));
+            await DataAccess.AddBookToListAsync(bookList.Id, book.Id);
+        }
+    }
+
+    private static async Task<HashSet<int>> GetBookIdsAsync(
+        BookList bookList,
+        IReadOnlyList<BookScanResult> scanResults)
+    {
+        var bookIds = new HashSet<int>();
+        foreach (var scanResult in scanResults)
+        {
+            var book = await DataAccess.AddOrGetBookAsync(
+                scanResult.Title,
+                scanResult.BookPath,
+                scanResult.Format,
+                scanResult.CoverPath,
+                scanResult.RelativePath,
+                scanResult.SourceAccessToken,
+                scanResult.CoverRelativePath,
+                scanResult.ArchiveEntryPath,
+                scanResult.ArchiveImageEntryPaths.Count == 0
+                    ? null
+                    : JsonSerializer.Serialize(scanResult.ArchiveImageEntryPaths));
+            bookIds.Add(book.Id);
+        }
+
+        return bookIds;
+    }
+
+    private async Task UpdateBookListAccessTokenAsync(BookList bookList, string futureAccessToken)
+    {
+        if (!string.Equals(bookList.FutureAccessToken, futureAccessToken, StringComparison.Ordinal))
+        {
+            await DataAccess.UpdateBookListFutureAccessTokenAsync(bookList.Id, futureAccessToken);
+            bookList.FutureAccessToken = futureAccessToken;
+        }
+    }
+
+    private async Task ReloadCollectionsAsync()
+    {
+        var books = await DataAccess.GetBooksAsync();
+        var bookLists = await DataAccess.GetBookListsAsync();
+
+        Books.Clear();
+        foreach (var book in books)
+        {
+            Books.Add(book);
+        }
+
+        BookLists.Clear();
+        foreach (var bookList in bookLists)
+        {
+            BookLists.Add(bookList);
+        }
+
+        HasBooks = Books.Count > 0;
+        HasBookLists = BookLists.Count > 0;
+    }
+
+}

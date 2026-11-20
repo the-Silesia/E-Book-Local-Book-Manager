@@ -1,0 +1,40 @@
+﻿using System;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace new_project.Models;
+
+public partial class Book : ObservableObject
+{
+    //Id
+    public int Id { get; set; }
+    //标题
+    public string Title { get; set; }
+    //封面存储路径
+    public string? CoverPath { get; set; }
+    //阅读进度
+    public string? ReadingProgress { get; set; }
+    //添加时间
+    public DateTime DateAdded { get; set; }
+    //最后打开时间
+    public DateTime? DateLastOpened { get; set; }
+    //书籍路径
+    public string BookPath { get; set; }
+    //是否收藏
+    [ObservableProperty]
+    public partial bool IsFavorite { get; set; }
+    public Book(int id,string title,string bookPath)
+    {
+        Id = id;
+        Title = title;
+        DateAdded = DateTime.Now;
+        BookPath = bookPath;
+        ReadingProgress = "0";
+        IsFavorite = false;
+    }
+    [RelayCommand]
+    private void SetFavorite()
+    {
+        IsFavorite = !IsFavorite;
+    }
+}

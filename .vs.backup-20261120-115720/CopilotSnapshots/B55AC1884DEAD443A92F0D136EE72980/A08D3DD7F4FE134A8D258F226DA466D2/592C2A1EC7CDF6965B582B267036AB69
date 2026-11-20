@@ -1,0 +1,247 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using Windows.Data.Pdf;
+using Windows.Foundation;
+using Windows.Graphics.Imaging;
+using Windows.Storage;
+using Windows.Storage.Streams;
+using Windows.UI;
+
+namespace new_project.Services;
+
+public sealed class BookCoverService
+{
+    private const uint CoverWidth = 480;
+    private const uint CoverHeight = 678;
+    private const string CoverFolderName = "Covers";
+
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp"
+    };
+
+    public async Task<string?> CreateImageFolderCoverAsync(StorageFolder folder)
+    {
+        try
+        {
+            var imageFile = (await folder.GetFilesAsync())
+                .Where(file => ImageExtensions.Contains(file.FileType))
+                .OrderBy(file => file.Name, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+            return imageFile is null
+                ? null
+                : await CreateImageCoverAsync(imageFile);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<string?> CreatePdfCoverAsync(StorageFile file)
+    {
+        try
+        {
+            var cacheFile = await GetCacheFileAsync(await GetCacheKeyAsync(file));
+            if (cacheFile is not null)
+            {
+                return cacheFile.Path;
+            }
+
+            await using var sourceStream = await file.OpenStreamForReadAsync();
+            await using var randomAccessStream = sourceStream.AsRandomAccessStream();
+            var document = await PdfDocument.LoadFromStreamAsync(randomAccessStream);
+            if (document.PageCount == 0)
+            {
+                return null;
+            }
+
+            cacheFile = await CreateCacheFileAsync(await GetCacheKeyAsync(file));
+            await RenderPdfPageAsync(document.GetPage(0), cacheFile);
+            return cacheFile.Path;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<string?> CreateZipCoverAsync(StorageFile archiveFile)
+    {
+        try
+        {
+            await using var archiveStream = await archiveFile.OpenStreamForReadAsync();
+            using var archive = new ZipArchive(archiveStream, ZipArchiveMode.Read);
+            if (archive.Entries.Any(entry => entry.FullName.Contains('/') || entry.FullName.Contains('\\')))
+            {
+                return null;
+            }
+
+            var imageEntry = archive.Entries
+                .Where(entry => ImageExtensions.Contains(Path.GetExtension(entry.Name)))
+                .OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+            if (imageEntry is null)
+            {
+                return null;
+            }
+
+            var cacheKey = await GetCacheKeyAsync(archiveFile, imageEntry.FullName);
+            var cacheFile = await GetCacheFileAsync(cacheKey);
+            if (cacheFile is not null)
+            {
+                return cacheFile.Path;
+            }
+
+            using var entryStream = imageEntry.Open();
+            using var imageStream = new MemoryStream();
+            await entryStream.CopyToAsync(imageStream);
+            imageStream.Position = 0;
+            cacheFile = await CreateCacheFileAsync(cacheKey);
+            await CreateImageCoverAsync(imageStream.AsRandomAccessStream(), cacheFile);
+            return cacheFile.Path;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<string?> CreateImageCoverAsync(StorageFile file)
+    {
+        var cacheKey = await GetCacheKeyAsync(file);
+        var cacheFile = await GetCacheFileAsync(cacheKey);
+        if (cacheFile is not null)
+        {
+            return cacheFile.Path;
+        }
+
+        await using var sourceStream = await file.OpenStreamForReadAsync();
+        await using var randomAccessStream = sourceStream.AsRandomAccessStream();
+        cacheFile = await CreateCacheFileAsync(cacheKey);
+        await CreateImageCoverAsync(randomAccessStream, cacheFile);
+        return cacheFile.Path;
+    }
+
+    private static async Task CreateImageCoverAsync(
+        IRandomAccessStream sourceStream,
+        StorageFile outputFile)
+    {
+        var decoder = await BitmapDecoder.CreateAsync(sourceStream);
+        var scale = Math.Max(
+            (double)CoverWidth / decoder.PixelWidth,
+            (double)CoverHeight / decoder.PixelHeight);
+        var scaledWidth = (uint)Math.Ceiling(decoder.PixelWidth * scale);
+        var scaledHeight = (uint)Math.Ceiling(decoder.PixelHeight * scale);
+        var transform = new BitmapTransform
+        {
+            ScaledWidth = scaledWidth,
+            ScaledHeight = scaledHeight,
+            InterpolationMode = BitmapInterpolationMode.Fant,
+            Bounds = new BitmapBounds
+            {
+                X = (scaledWidth - CoverWidth) / 2,
+                Y = (scaledHeight - CoverHeight) / 2,
+                Width = CoverWidth,
+                Height = CoverHeight
+            }
+        };
+
+        using var bitmap = await decoder.GetSoftwareBitmapAsync(
+            BitmapPixelFormat.Bgra8,
+            BitmapAlphaMode.Premultiplied,
+            transform,
+            ExifOrientationMode.RespectExifOrientation,
+            ColorManagementMode.DoNotColorManage);
+        await SavePngAsync(bitmap, outputFile);
+    }
+
+    private static async Task RenderPdfPageAsync(PdfPage page, StorageFile outputFile)
+    {
+        var pageSize = page.Size;
+        var targetAspectRatio = (double)CoverWidth / CoverHeight;
+        var pageAspectRatio = pageSize.Width / pageSize.Height;
+        Rect sourceRect;
+        if (pageAspectRatio > targetAspectRatio)
+        {
+            var cropWidth = pageSize.Height * targetAspectRatio;
+            sourceRect = new Rect((pageSize.Width - cropWidth) / 2, 0, cropWidth, pageSize.Height);
+        }
+        else
+        {
+            var cropHeight = pageSize.Width / targetAspectRatio;
+            sourceRect = new Rect(0, (pageSize.Height - cropHeight) / 2, pageSize.Width, cropHeight);
+        }
+
+        using var outputStream = await outputFile.OpenAsync(FileAccessMode.ReadWrite);
+        outputStream.Size = 0;
+        var options = new PdfPageRenderOptions
+        {
+            BitmapEncoderId = BitmapEncoder.PngEncoderId,
+            DestinationWidth = CoverWidth,
+            DestinationHeight = CoverHeight,
+            SourceRect = sourceRect,
+            BackgroundColor = Colors.White,
+            IsIgnoringHighContrast = true
+        };
+        await page.RenderToStreamAsync(outputStream, options);
+        await outputStream.FlushAsync();
+    }
+
+    private static async Task SavePngAsync(SoftwareBitmap bitmap, StorageFile outputFile)
+    {
+        using var outputStream = await outputFile.OpenAsync(FileAccessMode.ReadWrite);
+        outputStream.Size = 0;
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, outputStream);
+        encoder.SetSoftwareBitmap(bitmap);
+        encoder.IsThumbnailGenerated = false;
+        await encoder.FlushAsync();
+    }
+
+    private static async Task<StorageFile> CreateCacheFileAsync(string cacheKey)
+    {
+        var folder = await ApplicationData.Current.LocalFolder.CreateFolderAsync(
+            CoverFolderName,
+            CreationCollisionOption.OpenIfExists);
+        return await folder.CreateFileAsync(
+            $"{cacheKey}.png",
+            CreationCollisionOption.ReplaceExisting);
+    }
+
+    private static async Task<StorageFile?> GetCacheFileAsync(string cacheKey)
+    {
+        var folder = await ApplicationData.Current.LocalFolder.CreateFolderAsync(
+            CoverFolderName,
+            CreationCollisionOption.OpenIfExists);
+        try
+        {
+            return await folder.GetFileAsync($"{cacheKey}.png");
+        }
+        catch (FileNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    private static async Task<string> GetCacheKeyAsync(StorageFile file, string? entryPath = null)
+    {
+        var properties = await file.GetBasicPropertiesAsync();
+        var value = string.Join(
+            "|",
+            "v2",
+            file.Path,
+            properties.Size,
+            properties.DateModified.UtcDateTime.Ticks,
+            entryPath ?? string.Empty);
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+    }
+}

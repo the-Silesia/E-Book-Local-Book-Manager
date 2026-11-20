@@ -1,0 +1,7 @@
+﻿# Copilot Instructions
+
+## 项目指南
+- 项目持久化约定：书籍信息（包括书籍、收藏、书单、阅读进度等）使用数据库持久化；应用设置和配置项使用 JSON 文件持久化，不放入数据库。后续设计、代码和文档应遵循这一分工。
+
+## UI 资源使用约定
+- 应用优先使用 WinUI 3 提供的 Iconography 图标资源、Typography StaticResource 资源和 ThemeResource 资源，避免重复定义同类 UI 资源。后续界面设计、代码和文档应遵循此约定。

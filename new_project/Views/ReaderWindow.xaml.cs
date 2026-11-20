@@ -1,0 +1,111 @@
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Xaml.Media;
+using new_project.Models;
+using new_project.Services;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace new_project.Views;
+
+/// <summary>
+/// An empty window that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class ReaderWindow : Window, IReaderHost
+{
+    private const int MaxTitleLength = 40;
+    private readonly OverlappedPresenter _windowedPresenter;
+
+    public ReaderWindow(Book book)
+    {
+        InitializeComponent();
+        SetTheme(AppSettingsService.Current.Theme);
+        ApplyBackdrop(AppSettingsService.Current.Backdrop);
+        AppWindow.Resize(new Windows.Graphics.SizeInt32(1525, 1000));
+        AppWindow.SetIcon("Assets/icon.ico");
+        _windowedPresenter = OverlappedPresenter.Create();
+        _windowedPresenter.PreferredMinimumWidth = 925;
+        _windowedPresenter.PreferredMinimumHeight = 600;
+        AppWindow.SetPresenter(_windowedPresenter);
+        Title = TruncateTitle(book.Title);
+        ReaderFrame.Navigate(
+            typeof(ReaderPage),
+            new ReaderPageNavigationParameter(book.Id, this));
+        Closed += ReaderWindow_Closed;
+    }
+
+    public void SetTheme(AppThemeMode theme)
+    {
+        if (Content is FrameworkElement root)
+        {
+            root.RequestedTheme = theme switch
+            {
+                AppThemeMode.Light => ElementTheme.Light,
+                AppThemeMode.Dark => ElementTheme.Dark,
+                _ => ElementTheme.Default
+            };
+        }
+
+        AppWindow.TitleBar.PreferredTheme = theme switch
+        {
+            AppThemeMode.Light => TitleBarTheme.Light,
+            AppThemeMode.Dark => TitleBarTheme.Dark,
+            _ => TitleBarTheme.UseDefaultAppMode
+        };
+    }
+
+    public void ApplyBackdrop(AppBackdropMode backdrop)
+    {
+        SystemBackdrop = backdrop switch
+        {
+            AppBackdropMode.MicaAlt => new MicaBackdrop { Kind = MicaKind.BaseAlt },
+            AppBackdropMode.Acrylic => new DesktopAcrylicBackdrop(),
+            AppBackdropMode.AcrylicThin => new DesktopAcrylicBackdrop(),
+            _ => new MicaBackdrop { Kind = MicaKind.Base }
+        };
+    }
+
+    private async void ReaderWindow_Closed(object sender, WindowEventArgs args)
+    {
+        if (ReaderFrame.Content is ReaderPage readerPage)
+        {
+            await readerPage.SaveProgressOnCloseAsync();
+        }
+    }
+
+    private static string TruncateTitle(string title)
+    {
+        return title.Length <= MaxTitleLength
+            ? title
+            : string.Concat(title[..(MaxTitleLength - 1)], "…");
+    }
+
+    public void SetReaderTitle(string? title)
+    {
+        Title = TruncateTitle(title ?? string.Empty);
+    }
+
+    public bool ToggleReaderFullscreen()
+    {
+        if (AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen)
+        {
+            ExitReaderFullscreen();
+        }
+        else
+        {
+            AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+        }
+
+        return AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
+    }
+
+    public void ExitReaderFullscreen()
+    {
+        if (AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen)
+        {
+            AppWindow.SetPresenter(_windowedPresenter);
+        }
+    }
+}

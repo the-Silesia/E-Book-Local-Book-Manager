@@ -1,0 +1,227 @@
+﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using new_project.Models;
+using new_project.Models.Repository;
+using new_project.Services;
+using System;
+using System.Globalization;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace new_project.Views;
+
+public sealed partial class ReaderPage : Page
+{
+    private Book? _book;
+    private DispatcherQueueTimer? _saveTimer;
+    private bool _isRestoringProgress;
+    private double _progress;
+    private readonly FolderAccessService _folderAccessService = new();
+
+    public ReaderPage()
+    {
+        InitializeComponent();
+        _saveTimer = DispatcherQueue.CreateTimer();
+        _saveTimer.Interval = TimeSpan.FromMilliseconds(500);
+        _saveTimer.Tick += SaveTimer_Tick;
+    }
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+
+        if (e.Parameter is not int bookId)
+        {
+            await ShowErrorAsync("无法确定要打开的书籍。");
+            return;
+        }
+
+        try
+        {
+            _book = await DataAccess.GetBookAsync(bookId);
+            if (_book is null)
+            {
+                await ShowErrorAsync("找不到这本书的记录。");
+                Frame?.GoBack();
+                return;
+            }
+
+            BookTitleText.Text = _book.Title;
+            ReaderTextBlock.Text = await ReadTextAsync(_book);
+            _progress = ParseProgress(_book.ReadingProgress);
+            UpdateProgressDisplay();
+
+            var lastOpened = DateTimeOffset.UtcNow;
+            await DataAccess.UpdateReadingProgressAsync(_book.Id, FormatProgress(_progress), lastOpened);
+            _book.DateLastOpened = lastOpened;
+            DispatcherQueue.TryEnqueue(ApplySavedProgress);
+        }
+        catch (Exception exception)
+        {
+            await ShowErrorAsync($"无法打开书籍：{exception.Message}");
+        }
+    }
+
+    protected override async void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        await SaveProgressAsync();
+        base.OnNavigatedFrom(e);
+    }
+
+    private void ReaderScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (_isRestoringProgress || _book is null)
+        {
+            return;
+        }
+
+        _progress = ReaderScrollViewer.ScrollableHeight <= 0
+            ? 0
+            : Math.Clamp(ReaderScrollViewer.VerticalOffset / ReaderScrollViewer.ScrollableHeight, 0, 1);
+        UpdateProgressDisplay();
+        _saveTimer?.Stop();
+        _saveTimer?.Start();
+    }
+
+    private async void SaveTimer_Tick(DispatcherQueueTimer sender, object args)
+    {
+        _saveTimer?.Stop();
+        await SaveProgressAsync();
+    }
+
+    private void ApplySavedProgress()
+    {
+        _isRestoringProgress = true;
+        if (ReaderScrollViewer.ScrollableHeight > 0)
+        {
+            ReaderScrollViewer.ChangeView(null, ReaderScrollViewer.ScrollableHeight * _progress, null, true);
+        }
+
+        UpdateProgressDisplay();
+        _isRestoringProgress = false;
+    }
+
+    private async Task SaveProgressAsync()
+    {
+        if (_book is null)
+        {
+            return;
+        }
+
+        _saveTimer?.Stop();
+        _book.ReadingProgress = FormatProgress(_progress);
+        _book.DateLastOpened = DateTimeOffset.UtcNow;
+        await DataAccess.UpdateReadingProgressAsync(_book.Id, _book.ReadingProgress, _book.DateLastOpened.Value);
+    }
+
+    private void UpdateProgressDisplay()
+    {
+        ReadingProgressBar.Value = _progress;
+        ReadingProgressText.Text = $"{_progress:P0}";
+    }
+
+    private void ReaderBackButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (Frame?.CanGoBack == true)
+        {
+            Frame.GoBack();
+        }
+    }
+
+    private async Task ShowErrorAsync(string message)
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "阅读失败",
+            Content = message,
+            CloseButtonText = "确定"
+        };
+        await dialog.ShowAsync();
+    }
+
+    private static double ParseProgress(string? value)
+    {
+        return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var progress)
+            ? Math.Clamp(progress, 0, 1)
+            : 0;
+    }
+
+    private static string FormatProgress(double progress)
+    {
+        return progress.ToString("0.########", CultureInfo.InvariantCulture);
+    }
+
+    private async Task<string> ReadTextAsync(Book book)
+    {
+        var file = await _folderAccessService.TryGetFileAsync(book.SourceAccessToken, book.RelativePath);
+        if (file is null)
+        {
+            throw new FileNotFoundException("无法通过 FutureAccessList 恢复书籍文件，请重新导入或重新定位书籍。");
+        }
+
+        await using var stream = await file.OpenStreamForReadAsync();
+        using var memoryStream = new System.IO.MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+        var bytes = memoryStream.ToArray();
+        if (bytes.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        if (HasPrefix(bytes, 0xEF, 0xBB, 0xBF))
+        {
+            return Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
+        }
+
+        if (HasPrefix(bytes, 0xFF, 0xFE, 0x00, 0x00))
+        {
+            return Encoding.UTF32.GetString(bytes, 4, bytes.Length - 4);
+        }
+
+        if (HasPrefix(bytes, 0xFE, 0xFF))
+        {
+            return Encoding.BigEndianUnicode.GetString(bytes, 2, bytes.Length - 2);
+        }
+
+        if (HasPrefix(bytes, 0xFF, 0xFE))
+        {
+            return Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2);
+        }
+
+        try
+        {
+            return new UTF8Encoding(false, true).GetString(bytes);
+        }
+        catch (DecoderFallbackException)
+        {
+            return Encoding.Default.GetString(bytes);
+        }
+    }
+
+    private static bool HasPrefix(byte[] bytes, params byte[] prefix)
+    {
+        if (bytes.Length < prefix.Length)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < prefix.Length; index++)
+        {
+            if (bytes[index] != prefix[index])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

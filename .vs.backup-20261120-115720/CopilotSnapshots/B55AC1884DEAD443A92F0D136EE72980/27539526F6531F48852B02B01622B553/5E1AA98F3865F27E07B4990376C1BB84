@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="new_project.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:new_project.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    mc:Ignorable="d">
+
+    <Grid>
+        <StackPanel Orientation="Vertical" Spacing="8" Margin="12" MaxWidth="1000">
+            <TextBlock x:Uid="SettingsPage_Header_Title" Style="{StaticResource TitleLargeTextBlockStyle}"/>
+            <!--设置卡片 切换浅色/深色/默认主题-->
+            <controls:SettingsCard x:Uid="SettingsPage_ThemeCard">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE793;"/>
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="ThemeComboBox"
+                          SelectionChanged="ThemeComboBox_SelectionChanged"/>
+            </controls:SettingsCard>
+            <!--设置卡片 切换背景Mica/Mica Alt/Acrylic/AcrylicThin-->
+            <controls:SettingsCard x:Uid="SettingsPage_BackgroundCard">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xEF1F;"/>
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="BackdropComboBox"
+                          SelectionChanged="BackdropComboBox_SelectionChanged"/>
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="阅读打开方式">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE8A5;"/>
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="ReaderOpenModeComboBox"
+                          SelectionChanged="ReaderOpenModeComboBox_SelectionChanged"/>
+            </controls:SettingsCard>
+        </StackPanel>
+    </Grid>
+</Page>

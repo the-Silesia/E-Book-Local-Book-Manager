@@ -1,0 +1,25 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Text;
+
+namespace new_project.Models;
+
+public partial class BookList : ObservableObject
+{
+    //书单列表
+    public List<Book>? Books { get; set; }
+    //书单显式名称
+    public string ListName { get; set; }
+    //书籍数目
+    public int BookNum { get; set; }
+    //书单所在目录
+    public string BookListPath { get; set; }
+    public BookList(string path,string name)
+    {
+        BookListPath = path;
+        ListName = name;
+        BookNum = Books?.Count ?? 0;
+    }
+}

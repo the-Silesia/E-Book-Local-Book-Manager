@@ -1,0 +1,87 @@
+﻿using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using Windows.Storage;
+
+namespace new_project.Services;
+
+public static class BookMetadataReader
+{
+    public static async Task<string> ReadTitleAsync(StorageFile file, string fallbackTitle)
+    {
+        var extension = file.FileType;
+        if (extension.Equals(".epub", System.StringComparison.OrdinalIgnoreCase))
+        {
+            var title = await ReadEpubTitleAsync(file);
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                return title;
+            }
+        }
+        else if (extension.Equals(".pdf", System.StringComparison.OrdinalIgnoreCase))
+        {
+            var title = await ReadPdfTitleAsync(file);
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                return title;
+            }
+        }
+
+        return fallbackTitle;
+    }
+
+    private static async Task<string?> ReadEpubTitleAsync(StorageFile file)
+    {
+        await using var stream = await file.OpenStreamForReadAsync();
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        var containerEntry = archive.GetEntry("META-INF/container.xml");
+        if (containerEntry is null)
+        {
+            return null;
+        }
+
+        using var containerStream = containerEntry.Open();
+        var container = await XDocument.LoadAsync(containerStream, LoadOptions.None, default);
+        var rootFile = container.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "rootfile")?
+            .Attribute("full-path")?.Value;
+        if (string.IsNullOrWhiteSpace(rootFile))
+        {
+            return null;
+        }
+
+        var packageEntry = archive.GetEntry(rootFile.Replace('\\', '/'));
+        if (packageEntry is null)
+        {
+            return null;
+        }
+
+        using var packageStream = packageEntry.Open();
+        var package = await XDocument.LoadAsync(packageStream, LoadOptions.None, default);
+        return package.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "title")?.Value.Trim();
+    }
+
+    private static async Task<string?> ReadPdfTitleAsync(StorageFile file)
+    {
+        await using var stream = await file.OpenStreamForReadAsync();
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+        var content = Encoding.Latin1.GetString(memoryStream.ToArray());
+        var marker = "/Title";
+        var markerIndex = content.IndexOf(marker, System.StringComparison.Ordinal);
+        if (markerIndex < 0)
+        {
+            return null;
+        }
+
+        var start = content.IndexOf('(', markerIndex + marker.Length);
+        var end = start < 0 ? -1 : content.IndexOf(')', start + 1);
+        return start >= 0 && end > start
+            ? content[(start + 1)..end].Trim()
+            : null;
+    }
+}

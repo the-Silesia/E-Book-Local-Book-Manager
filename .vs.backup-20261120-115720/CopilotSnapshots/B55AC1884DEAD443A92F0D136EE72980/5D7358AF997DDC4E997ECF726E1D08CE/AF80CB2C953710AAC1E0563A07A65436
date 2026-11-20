@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="new_project.Views.ReaderPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"
+                    Click="ReaderBackButton_Click"
+                    AutomationProperties.Name="返回">
+                <SymbolIcon Symbol="Back"/>
+            </Button>
+            <TextBlock Grid.Column="1"
+                       x:Name="BookTitleText"
+                       Margin="12,0,0,0"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource TitleLargeTextBlockStyle}"
+                       TextTrimming="CharacterEllipsis"/>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1"
+                      x:Name="ReaderScrollViewer"
+                      Padding="8,16"
+                      VerticalScrollBarVisibility="Auto"
+                      ViewChanged="ReaderScrollViewer_ViewChanged">
+            <TextBlock x:Name="ReaderTextBlock"
+                       TextWrapping="Wrap"
+                       Style="{StaticResource BodyTextBlockStyle}"/>
+        </ScrollViewer>
+
+        <Grid Grid.Row="2" Margin="8,16,8,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ProgressBar Grid.Column="0"
+                         x:Name="ReadingProgressBar"
+                         Height="4"
+                         Minimum="0"
+                         Maximum="1"
+                         VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1"
+                       x:Name="ReadingProgressText"
+                       Margin="12,0,0,0"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</Page>

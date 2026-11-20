@@ -1,0 +1,305 @@
+﻿using new_project.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Threading.Tasks;
+using Windows.Storage;
+
+namespace new_project.Services;
+
+public sealed class BookScanner
+{
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp"
+    };
+
+    private static readonly HashSet<string> DocumentExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".txt",
+        ".pdf",
+        ".epub"
+    };
+
+    public async Task<IReadOnlyList<BookScanResult>> ScanAsync(
+        StorageFolder folder,
+        string sourceAccessToken)
+    {
+        var results = new List<BookScanResult>();
+        await ScanDirectoryAsync(folder, results, sourceAccessToken, string.Empty, null);
+
+        var childDirectories = (await folder.GetFoldersAsync())
+            .OrderBy(child => child.Name, StringComparer.OrdinalIgnoreCase);
+        foreach (var childDirectory in childDirectories)
+        {
+            await ScanDirectoryAsync(
+                childDirectory,
+                results,
+                sourceAccessToken,
+                childDirectory.Name,
+                null);
+        }
+
+        return results;
+    }
+
+    private async Task ScanDirectoryAsync(
+        StorageFolder directory,
+        List<BookScanResult> results,
+        string sourceAccessToken,
+        string relativeDirectoryPath,
+        string? titleOverride)
+    {
+        var files = (await directory.GetFilesAsync())
+            .OrderBy(file => file.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var imageFiles = new List<StorageFile>();
+
+        foreach (var file in files)
+        {
+            var extension = file.FileType;
+            var relativePath = CombineRelativePath(relativeDirectoryPath, file.Name);
+
+            if (ImageExtensions.Contains(extension))
+            {
+                imageFiles.Add(file);
+                continue;
+            }
+
+            if (DocumentExtensions.Contains(extension))
+            {
+                var fallbackTitle = Path.GetFileNameWithoutExtension(file.Name);
+                var title = await BookMetadataReader.ReadTitleAsync(file, fallbackTitle);
+                results.Add(new BookScanResult
+                {
+                    Format = GetDocumentFormat(extension),
+                    Title = title,
+                    BookPath = file.Path,
+                    RelativePath = relativePath,
+                    SourceAccessToken = sourceAccessToken
+                });
+                continue;
+            }
+
+            if (extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                await ScanArchiveAsync(file, results, sourceAccessToken, relativePath);
+            }
+        }
+
+        if (imageFiles.Count > 0)
+        {
+            var imageRelativePaths = imageFiles
+                .Select(file => CombineRelativePath(relativeDirectoryPath, file.Name))
+                .ToArray();
+            var fallbackTitle = titleOverride ?? directory.Name;
+            results.Add(new BookScanResult
+            {
+                Format = BookFormat.ImageCollection,
+                Title = fallbackTitle,
+                BookPath = directory.Path,
+                RelativePath = relativeDirectoryPath,
+                SourceAccessToken = sourceAccessToken,
+                CoverPath = imageFiles[0].Path,
+                CoverRelativePath = imageRelativePaths[0],
+                ImagePaths = imageFiles.Select(file => file.Path).ToArray(),
+                ImageRelativePaths = imageRelativePaths
+            });
+        }
+    }
+
+    private static async Task ScanArchiveAsync(
+        StorageFile archiveFile,
+        List<BookScanResult> results,
+        string sourceAccessToken,
+        string archiveRelativePath)
+    {
+        var archiveEntries = await ReadArchiveEntriesAsync(archiveFile);
+        var groups = ClassifyArchiveEntries(archiveEntries, archiveFile.Name);
+        foreach (var group in groups)
+        {
+            AddArchiveGroupResults(
+                archiveFile,
+                archiveRelativePath,
+                sourceAccessToken,
+                group,
+                results);
+        }
+    }
+
+    private static async Task<IReadOnlyList<ArchiveEntryInfo>> ReadArchiveEntriesAsync(StorageFile archiveFile)
+    {
+        await using var inputStream = await archiveFile.OpenStreamForReadAsync();
+        using var archive = new ZipArchive(inputStream, ZipArchiveMode.Read);
+        var entries = new List<ArchiveEntryInfo>();
+        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in archive.Entries)
+        {
+            var segments = SplitArchivePath(entry.FullName);
+            if (segments.Count == 0)
+            {
+                continue;
+            }
+
+            var normalizedPath = string.Join('/', segments);
+            if (!paths.Add(normalizedPath))
+            {
+                throw new InvalidDataException("压缩包包含重复或大小写冲突的路径。");
+            }
+
+            entries.Add(new ArchiveEntryInfo(
+                normalizedPath,
+                normalizedPath[..Math.Max(0, normalizedPath.LastIndexOf('/'))],
+                Path.GetFileName(normalizedPath),
+                Path.GetExtension(normalizedPath),
+                entry.FullName.EndsWith("/", StringComparison.Ordinal)
+                    || entry.FullName.EndsWith("\\", StringComparison.Ordinal)));
+        }
+
+        return entries;
+    }
+
+    private static IReadOnlyList<ArchiveGroup> ClassifyArchiveEntries(
+        IReadOnlyList<ArchiveEntryInfo> entries,
+        string archiveName)
+    {
+        var groups = new Dictionary<string, ArchiveGroup>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in entries.Where(entry => !entry.IsDirectory))
+        {
+            if (ImageExtensions.Contains(entry.Extension))
+            {
+                var group = GetOrCreateGroup(groups, entry.DirectoryPath, archiveName);
+                group.Images.Add(entry);
+                continue;
+            }
+
+            if (DocumentExtensions.Contains(entry.Extension))
+            {
+                var group = GetOrCreateGroup(groups, entry.DirectoryPath, archiveName);
+                group.Documents.Add(entry);
+            }
+        }
+
+        return groups.Values
+            .Where(group => group.Images.Count > 0 || group.Documents.Count > 0)
+            .OrderBy(group => group.RelativeDirectoryPath, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static ArchiveGroup GetOrCreateGroup(
+        Dictionary<string, ArchiveGroup> groups,
+        string directoryPath,
+        string archiveName)
+    {
+        if (groups.TryGetValue(directoryPath, out var group))
+        {
+            return group;
+        }
+
+        group = new ArchiveGroup(
+            directoryPath,
+            string.IsNullOrEmpty(directoryPath)
+                ? Path.GetFileNameWithoutExtension(archiveName)
+                : Path.GetFileName(directoryPath));
+        groups.Add(directoryPath, group);
+        return group;
+    }
+
+    private static void AddArchiveGroupResults(
+        StorageFile archiveFile,
+        string archiveRelativePath,
+        string sourceAccessToken,
+        ArchiveGroup group,
+        List<BookScanResult> results)
+    {
+        foreach (var document in group.Documents.OrderBy(
+            entry => entry.FileName,
+            StringComparer.OrdinalIgnoreCase))
+        {
+            results.Add(new BookScanResult
+            {
+                Format = GetDocumentFormat(document.Extension),
+                Title = Path.GetFileNameWithoutExtension(document.FileName),
+                BookPath = archiveFile.Path,
+                RelativePath = archiveRelativePath,
+                ArchiveEntryPath = document.RelativePath,
+                SourceAccessToken = sourceAccessToken
+            });
+        }
+
+        if (group.Images.Count == 0)
+        {
+            return;
+        }
+
+        var imageEntryPaths = group.Images
+            .OrderBy(entry => entry.FileName, StringComparer.OrdinalIgnoreCase)
+            .Select(entry => entry.RelativePath)
+            .ToArray();
+        results.Add(new BookScanResult
+        {
+            Format = BookFormat.ImageCollection,
+            Title = group.Title,
+            BookPath = archiveFile.Path,
+            RelativePath = archiveRelativePath,
+            SourceAccessToken = sourceAccessToken,
+            ArchiveEntryPath = group.RelativeDirectoryPath,
+            ArchiveImageEntryPaths = imageEntryPaths
+        });
+    }
+
+    private sealed class ArchiveGroup(string relativeDirectoryPath, string title)
+    {
+        public string RelativeDirectoryPath { get; } = relativeDirectoryPath;
+        public string Title { get; } = title;
+        public List<ArchiveEntryInfo> Images { get; } = [];
+        public List<ArchiveEntryInfo> Documents { get; } = [];
+    }
+
+    private sealed record ArchiveEntryInfo(
+        string RelativePath,
+        string DirectoryPath,
+        string FileName,
+        string Extension,
+        bool IsDirectory);
+
+    private static IReadOnlyList<string> SplitArchivePath(string entryPath)
+    {
+        var segments = entryPath
+            .Replace('\\', '/')
+            .Split('/', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var segment in segments)
+        {
+            if (segment is "." or ".." || segment.Contains(':'))
+            {
+                throw new InvalidDataException("压缩包包含无效路径。");
+            }
+        }
+
+        return segments;
+    }
+
+    private static string CombineRelativePath(string directoryPath, string name)
+    {
+        return string.IsNullOrEmpty(directoryPath)
+            ? name
+            : $"{directoryPath}/{name}";
+    }
+
+    private static BookFormat GetDocumentFormat(string extension)
+    {
+        return extension.ToLowerInvariant() switch
+        {
+            ".txt" => BookFormat.Text,
+            ".pdf" => BookFormat.Pdf,
+            ".epub" => BookFormat.Epub,
+            _ => BookFormat.Unknown
+        };
+    }
+}

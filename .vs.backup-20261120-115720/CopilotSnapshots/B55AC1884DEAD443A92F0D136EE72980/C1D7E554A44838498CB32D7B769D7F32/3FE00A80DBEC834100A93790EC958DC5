@@ -1,0 +1,31 @@
+﻿using System;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.Storage.AccessCache;
+
+namespace new_project.Services;
+
+public sealed class FolderAccessService
+{
+    public string AddToFutureAccessList(StorageFolder folder)
+    {
+        return StorageApplicationPermissions.FutureAccessList.Add(folder);
+    }
+
+    public async Task<StorageFolder?> TryGetFolderAsync(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return null;
+        }
+
+        try
+        {
+            return await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(token);
+        }
+        catch (Exception exception) when (exception is UnauthorizedAccessException || exception is FileNotFoundException)
+        {
+            return null;
+        }
+    }
+}

@@ -1,0 +1,9 @@
+﻿# Copilot Instructions
+
+## 项目指南
+- 项目持久化约定：书籍信息（包括书籍、收藏、书单、阅读进度等）使用数据库持久化；应用设置和配置项使用 JSON 文件持久化，不放入数据库。后续设计、代码和文档应遵循这一分工。
+- 架构约定：BooksViewModel 作为应用级共享状态容器，由 App.xaml.cs 持有单例引用；Book 和 BookList 等书库相关状态放入 BooksViewModel，使其生命周期覆盖整个应用，并供多个 View 页面绑定使用。
+- 页面空状态约定：HomePage.xaml 中的 `HomePage_nullContent_Info` Grid 必须保留，用于书库为空时向用户显示空状态和导入入口；书籍存在时将其 `Visibility` 设为 `Collapsed`。其他页面可参考 FavoritePage 的类似空状态 Grid，不应通过删除该 Grid 来替代状态切换。
+
+## UI 资源使用约定
+- 应用优先使用 WinUI 3 提供的 Iconography 图标资源、Typography StaticResource 资源和 ThemeResource 资源，避免重复定义同类 UI 资源。后续界面设计、代码和文档应遵循此约定。

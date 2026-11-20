@@ -1,0 +1,13 @@
+﻿# Copilot Instructions
+
+## 项目指南
+- 项目持久化约定：书籍信息（包括书籍、收藏、书单、阅读进度等）使用数据库持久化；应用设置和配置项使用 JSON 文件持久化，不放入数据库。后续设计、代码和文档应遵循这一分工。
+- 书籍组织模型：用户通过选择文件夹添加书籍，而不是选择单个文件；每个被添加的文件夹对应一个 BookList，文件夹内可包含多个可识别的书籍文件；应用需要持久化并管理多个 BookList。BooksViewModel 应作为应用级共享状态容器，同时管理 Books 和 BookLists。
+- BooksViewModel 的 CommunityToolkit.Mvvm `[ObservableProperty]` 属性采用 C# 14 的显式 partial 属性写法（例如 `public partial bool IsLoading { get; set; }`），后续修改该 ViewModel 时应保持此写法并以用户当前代码为准。
+- 架构约定：BooksViewModel 作为应用级共享状态容器，由 App.xaml.cs 持有单例引用；Book 和 BookList 等书库相关状态放入 BooksViewModel，使其生命周期覆盖整个应用，并供多个 View 页面绑定使用。
+- 页面空状态约定：HomePage.xaml 中的 `HomePage_nullContent_Info` Grid 必须保留，用于书库为空时向用户显示空状态和导入入口；书籍存在时将其 `Visibility` 设为 `Collapsed`。其他页面可参考 FavoritePage 的类似空状态 Grid，不应通过删除该 Grid 来替代状态切换。
+- HomePage.xaml 已由用户完成人工重新排版设计。后续修改 HomePage 时必须以用户当前布局为准，不主动重排或覆盖 UI；保留 HomePage_nullContent_Info、现有绑定和事件，仅进行必要的功能或编译修复。
+- 书籍时间字段统一使用 DateTimeOffset，并始终以 UTC 时间保存和读取。
+
+## UI 资源使用约定
+- 应用优先使用 WinUI 3 提供的 Iconography 图标资源、Typography StaticResource 资源和 ThemeResource 资源，避免重复定义同类 UI 资源。后续界面设计、代码和文档应遵循此约定。

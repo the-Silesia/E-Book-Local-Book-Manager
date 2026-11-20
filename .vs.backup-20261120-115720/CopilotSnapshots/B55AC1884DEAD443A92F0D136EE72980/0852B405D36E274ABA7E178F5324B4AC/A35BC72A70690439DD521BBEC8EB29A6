@@ -1,0 +1,598 @@
+﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
+using new_project.Models;
+using new_project.Models.Repository;
+using new_project.Services;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.Resources;
+using Windows.Data.Pdf;
+using Windows.Storage;
+using Windows.Storage.Streams;
+using Microsoft.UI.Xaml.Media.Imaging;
+
+namespace new_project.Views;
+
+public sealed partial class ReaderPage : Page
+{
+    private const int MaxTitleBarSubtitleLength = 40;
+    private Book? _book;
+    private DispatcherQueueTimer? _saveTimer;
+    private bool _isRestoringProgress;
+    private double _progress;
+    private int _currentPageIndex;
+    private IReadOnlyList<StorageFile> _imageFiles = [];
+    private IReadOnlyList<string> _archiveImageEntryPaths = [];
+    private bool _isArchiveImageCollection;
+    private PdfDocument? _pdfDocument;
+    private IRandomAccessStream? _pdfStream;
+    private readonly FolderAccessService _folderAccessService = new();
+    private readonly ResourceLoader _resourceLoader = ResourceLoader.GetForViewIndependentUse();
+
+    public ReaderPage()
+    {
+        InitializeComponent();
+        _saveTimer = DispatcherQueue.CreateTimer();
+        _saveTimer.Interval = TimeSpan.FromMilliseconds(500);
+        _saveTimer.Tick += SaveTimer_Tick;
+    }
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+
+        if (e.Parameter is not int bookId)
+        {
+            await ShowErrorAsync(GetString("ReaderPage_Error_InvalidBookParameter"));
+            return;
+        }
+
+        try
+        {
+            _book = await DataAccess.GetBookAsync(bookId);
+            if (_book is null)
+            {
+                await ShowErrorAsync(GetString("ReaderPage_Error_BookNotFound"));
+                Frame?.GoBack();
+                return;
+            }
+
+            SetTitleBarSubtitle(_book.Title);
+            _progress = ParseProgress(_book.ReadingProgress);
+            await LoadBookContentAsync(_book);
+
+            var lastOpened = DateTimeOffset.UtcNow;
+            await DataAccess.UpdateReadingProgressAsync(_book.Id, FormatProgress(_progress), lastOpened);
+            _book.DateLastOpened = lastOpened;
+
+            if (IsPagedReader)
+            {
+                _currentPageIndex = GetPageIndexFromProgress(_progress, GetPagedPageCount());
+                await ShowPagedPageAsync();
+            }
+            else
+            {
+                DispatcherQueue.TryEnqueue(ApplySavedProgress);
+            }
+        }
+        catch (Exception exception)
+        {
+            await ShowErrorAsync(string.Format(
+                GetString("ReaderPage_Error_OpenBook"),
+                exception.Message));
+        }
+    }
+
+    protected override async void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        await SaveProgressAsync();
+        SetTitleBarSubtitle(null);
+        DisposePagedResources();
+        base.OnNavigatedFrom(e);
+    }
+
+    private bool IsPagedReader =>
+        _pdfDocument is not null || _isArchiveImageCollection || _imageFiles.Count > 0;
+
+    private async Task LoadBookContentAsync(Book book)
+    {
+        ResetPagedReader();
+
+        if (book.Format == BookFormat.ImageCollection)
+        {
+            await LoadImageCollectionAsync(book);
+            return;
+        }
+
+        if (book.Format == BookFormat.Pdf)
+        {
+            await LoadPdfAsync(book);
+            return;
+        }
+
+        if (book.Format != BookFormat.Text)
+        {
+            throw new NotSupportedException(GetString("ReaderPage_Error_UnsupportedFormat"));
+        }
+
+        ReaderScrollViewer.Visibility = Visibility.Visible;
+        PageNumberBox.Visibility = Visibility.Collapsed;
+        PageCountText.Visibility = Visibility.Collapsed;
+        ReadingProgressText.Visibility = Visibility.Visible;
+        ReaderTextBlock.Text = await ReadTextAsync(book);
+        UpdateProgressDisplay();
+    }
+
+    private async Task LoadImageCollectionAsync(Book book)
+    {
+        ReaderScrollViewer.Visibility = Visibility.Collapsed;
+        PagedReaderPanel.Visibility = Visibility.Visible;
+        PreviousPageButton.Visibility = Visibility.Visible;
+        NextPageButton.Visibility = Visibility.Visible;
+        PageNumberBox.Visibility = Visibility.Visible;
+        PageCountText.Visibility = Visibility.Visible;
+        ReadingProgressText.Visibility = Visibility.Collapsed;
+
+        if (!string.IsNullOrWhiteSpace(book.ArchiveImageEntryPathsJson))
+        {
+            _isArchiveImageCollection = true;
+            _archiveImageEntryPaths = JsonSerializer.Deserialize<List<string>>(
+                book.ArchiveImageEntryPathsJson) ?? [];
+            if (_archiveImageEntryPaths.Count == 0)
+            {
+                throw new InvalidDataException(GetString("ReaderPage_Error_NoImages"));
+            }
+
+            return;
+        }
+
+        var folder = await TryGetFolderAsync(book.SourceAccessToken, book.RelativePath);
+        if (folder is null)
+        {
+            throw new FileNotFoundException(GetString("ReaderPage_Error_RestoreBookFile"));
+        }
+
+        _imageFiles = (await folder.GetFilesAsync())
+            .Where(file => IsImageFile(file.FileType))
+            .OrderBy(file => file.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (_imageFiles.Count == 0)
+        {
+            throw new InvalidDataException(GetString("ReaderPage_Error_NoImages"));
+        }
+    }
+
+    private async Task LoadPdfAsync(Book book)
+    {
+        var file = await _folderAccessService.TryGetFileAsync(book.SourceAccessToken, book.RelativePath);
+        if (file is null)
+        {
+            throw new FileNotFoundException(GetString("ReaderPage_Error_RestoreBookFile"));
+        }
+
+        _pdfStream = await file.OpenAsync(FileAccessMode.Read);
+        _pdfDocument = await PdfDocument.LoadFromStreamAsync(_pdfStream);
+        if (_pdfDocument.PageCount == 0)
+        {
+            throw new InvalidDataException(GetString("ReaderPage_Error_NoPages"));
+        }
+
+        ReaderScrollViewer.Visibility = Visibility.Collapsed;
+        PagedReaderPanel.Visibility = Visibility.Visible;
+        PreviousPageButton.Visibility = Visibility.Visible;
+        NextPageButton.Visibility = Visibility.Visible;
+    }
+
+    private async Task ShowPagedPageAsync()
+    {
+        var imageData = await ReadPagedImageAsync();
+        using var stream = new InMemoryRandomAccessStream();
+        using var writer = new DataWriter(stream);
+        writer.WriteBytes(imageData);
+        await writer.StoreAsync();
+        await writer.FlushAsync();
+        stream.Seek(0);
+
+        var bitmap = new BitmapImage();
+        await bitmap.SetSourceAsync(stream);
+        PagedReaderImage.Source = bitmap;
+
+        var pageCount = GetPagedPageCount();
+        _progress = GetProgressFromPageIndex(_currentPageIndex, pageCount);
+        UpdateProgressDisplay();
+        UpdatePageNumberDisplay(pageCount);
+        PreviousPageButton.IsEnabled = _currentPageIndex > 0;
+        NextPageButton.IsEnabled = _currentPageIndex < pageCount - 1;
+        _saveTimer?.Stop();
+        _saveTimer?.Start();
+    }
+
+    private async Task<byte[]> ReadPagedImageAsync()
+    {
+        if (_pdfDocument is not null)
+        {
+            using var stream = new InMemoryRandomAccessStream();
+            using var page = _pdfDocument.GetPage((uint)_currentPageIndex);
+            await page.RenderToStreamAsync(stream);
+            stream.Seek(0);
+            return await ReadRandomAccessStreamAsync(stream);
+        }
+
+        if (_isArchiveImageCollection)
+        {
+            var file = await _folderAccessService.TryGetFileAsync(
+                _book?.SourceAccessToken,
+                _book?.RelativePath ?? string.Empty);
+            if (file is null)
+            {
+                throw new FileNotFoundException(GetString("ReaderPage_Error_RestoreBookFile"));
+            }
+
+            await using var inputStream = await file.OpenStreamForReadAsync();
+            using var archive = new ZipArchive(inputStream, ZipArchiveMode.Read);
+            var expectedPath = NormalizeArchivePath(_archiveImageEntryPaths[_currentPageIndex]);
+            var entry = archive.Entries.FirstOrDefault(candidate =>
+                string.Equals(
+                    NormalizeArchivePath(candidate.FullName),
+                    expectedPath,
+                    StringComparison.OrdinalIgnoreCase));
+            if (entry is null)
+            {
+                throw new FileNotFoundException(GetString("ReaderPage_Error_ImageNotFound"));
+            }
+
+            await using var entryStream = entry.Open();
+            using var memoryStream = new MemoryStream();
+            await entryStream.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
+        }
+
+        await using var imageStream = await _imageFiles[_currentPageIndex].OpenStreamForReadAsync();
+        using var imageMemoryStream = new MemoryStream();
+        await imageStream.CopyToAsync(imageMemoryStream);
+        return imageMemoryStream.ToArray();
+    }
+
+    private static async Task<byte[]> ReadRandomAccessStreamAsync(IRandomAccessStream stream)
+    {
+        var size = checked((uint)stream.Size);
+        var reader = new DataReader(stream.GetInputStreamAt(0));
+        await reader.LoadAsync(size);
+        var bytes = new byte[size];
+        reader.ReadBytes(bytes);
+        reader.Dispose();
+        return bytes;
+    }
+
+    private async void PreviousPageButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!IsPagedReader || _currentPageIndex <= 0)
+        {
+            return;
+        }
+
+        _currentPageIndex--;
+        await ShowPagedPageAsync();
+    }
+
+    private async void PageNumberBox_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            await CommitPageNumberAsync();
+            e.Handled = true;
+        }
+    }
+
+    private async void PageNumberBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        await CommitPageNumberAsync();
+    }
+
+    private async Task CommitPageNumberAsync()
+    {
+        if (!IsPagedReader)
+        {
+            return;
+        }
+
+        var pageCount = GetPagedPageCount();
+        var pageNumber = PageNumberBox.Value;
+        if (double.IsNaN(pageNumber)
+            || pageNumber < 1
+            || pageNumber > pageCount
+            || pageNumber != Math.Truncate(pageNumber))
+        {
+            UpdatePageNumberDisplay(pageCount);
+            return;
+        }
+
+        var pageIndex = (int)pageNumber - 1;
+        if (pageIndex == _currentPageIndex)
+        {
+            UpdatePageNumberDisplay(pageCount);
+            return;
+        }
+
+        _currentPageIndex = pageIndex;
+        await ShowPagedPageAsync();
+    }
+
+    private void UpdatePageNumberDisplay(int pageCount)
+    {
+        PageNumberBox.Minimum = 1;
+        PageNumberBox.Maximum = pageCount;
+        PageNumberBox.Value = _currentPageIndex + 1;
+        PageCountText.Text = string.Format(
+            GetString("ReaderPage_PageCount"),
+            pageCount);
+    }
+
+    private async void NextPageButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!IsPagedReader || _currentPageIndex >= GetPagedPageCount() - 1)
+        {
+            return;
+        }
+
+        _currentPageIndex++;
+        await ShowPagedPageAsync();
+    }
+
+    private async Task<StorageFolder?> TryGetFolderAsync(string? folderToken, string relativePath)
+    {
+        var folder = await _folderAccessService.TryGetFolderAsync(folderToken);
+        if (folder is null)
+        {
+            return null;
+        }
+
+        foreach (var segment in relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            folder = await folder.GetFolderAsync(segment);
+        }
+
+        return folder;
+    }
+
+    private void ResetPagedReader()
+    {
+        DisposePagedResources();
+        _currentPageIndex = 0;
+        _imageFiles = [];
+        _archiveImageEntryPaths = [];
+        _isArchiveImageCollection = false;
+        ReaderScrollViewer.Visibility = Visibility.Collapsed;
+        PagedReaderPanel.Visibility = Visibility.Collapsed;
+        PreviousPageButton.Visibility = Visibility.Collapsed;
+        NextPageButton.Visibility = Visibility.Collapsed;
+    }
+
+    private void DisposePagedResources()
+    {
+        _pdfDocument = null;
+        _pdfStream?.Dispose();
+        _pdfStream = null;
+    }
+
+    private int GetPagedPageCount()
+    {
+        return _pdfDocument is not null
+            ? (int)_pdfDocument.PageCount
+            : _isArchiveImageCollection
+                ? _archiveImageEntryPaths.Count
+                : _imageFiles.Count;
+    }
+
+    private static int GetPageIndexFromProgress(double progress, int pageCount)
+    {
+        return pageCount <= 1
+            ? 0
+            : Math.Clamp((int)Math.Round(progress * (pageCount - 1)), 0, pageCount - 1);
+    }
+
+    private static double GetProgressFromPageIndex(int pageIndex, int pageCount)
+    {
+        return pageCount <= 1 ? 0 : (double)pageIndex / (pageCount - 1);
+    }
+
+    private static bool IsImageFile(string fileType)
+    {
+        return fileType is ".png" or ".jpg" or ".jpeg" or ".webp";
+    }
+
+    private static string NormalizeArchivePath(string path)
+    {
+        return string.Join('/', path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private void ReaderScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (_isRestoringProgress || _book is null || IsPagedReader)
+        {
+            return;
+        }
+
+        _progress = ReaderScrollViewer.ScrollableHeight <= 0
+            ? 0
+            : Math.Clamp(ReaderScrollViewer.VerticalOffset / ReaderScrollViewer.ScrollableHeight, 0, 1);
+        UpdateProgressDisplay();
+        _saveTimer?.Stop();
+        _saveTimer?.Start();
+    }
+
+    private async void SaveTimer_Tick(DispatcherQueueTimer sender, object args)
+    {
+        _saveTimer?.Stop();
+        await SaveProgressAsync();
+    }
+
+    private void ApplySavedProgress()
+    {
+        _isRestoringProgress = true;
+        if (ReaderScrollViewer.ScrollableHeight > 0)
+        {
+            ReaderScrollViewer.ChangeView(null, ReaderScrollViewer.ScrollableHeight * _progress, null, true);
+        }
+
+        UpdateProgressDisplay();
+        _isRestoringProgress = false;
+    }
+
+    private async Task SaveProgressAsync()
+    {
+        if (_book is null)
+        {
+            return;
+        }
+
+        _saveTimer?.Stop();
+        _book.ReadingProgress = FormatProgress(_progress);
+        _book.DateLastOpened = DateTimeOffset.UtcNow;
+        await DataAccess.UpdateReadingProgressAsync(
+            _book.Id,
+            _book.ReadingProgress,
+            _book.DateLastOpened.Value);
+    }
+
+    private void UpdateProgressDisplay()
+    {
+        ReadingProgressBar.Value = _progress;
+        if (!IsPagedReader)
+        {
+            ReadingProgressText.Text = $"{_progress:P0}";
+        }
+    }
+
+    private void ReaderBackButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (Frame?.CanGoBack == true)
+        {
+            Frame.GoBack();
+        }
+    }
+
+    private static string TruncateTitle(string title)
+    {
+        return title.Length <= MaxTitleBarSubtitleLength
+            ? title
+            : string.Concat(title.AsSpan(0, MaxTitleBarSubtitleLength - 1), "…");
+    }
+
+    private static void SetTitleBarSubtitle(string? title)
+    {
+        if (App.CurrentWindow is MainWindow mainWindow)
+        {
+            mainWindow.SetTitleBarSubtitle(title is null ? null : TruncateTitle(title));
+        }
+    }
+
+    private async Task ShowErrorAsync(string message)
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = GetString("ReaderPage_ContentDialog_ReadError_Title"),
+            Content = message,
+            CloseButtonText = GetString("ReaderPage_ContentDialog_ReadError_CloseButtonText")
+        };
+        await dialog.ShowAsync();
+    }
+
+    private string GetString(string resourceKey)
+    {
+        return _resourceLoader.GetString(resourceKey);
+    }
+
+    private static double ParseProgress(string? value)
+    {
+        return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var progress)
+            ? Math.Clamp(progress, 0, 1)
+            : 0;
+    }
+
+    private static string FormatProgress(double progress)
+    {
+        return progress.ToString("0.########", CultureInfo.InvariantCulture);
+    }
+
+    private async Task<string> ReadTextAsync(Book book)
+    {
+        var file = await _folderAccessService.TryGetFileAsync(book.SourceAccessToken, book.RelativePath);
+        if (file is null)
+        {
+            throw new FileNotFoundException(GetString("ReaderPage_Error_RestoreBookFile"));
+        }
+
+        await using var stream = await file.OpenStreamForReadAsync();
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+        var bytes = memoryStream.ToArray();
+        if (bytes.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        if (HasPrefix(bytes, 0xEF, 0xBB, 0xBF))
+        {
+            return Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
+        }
+
+        if (HasPrefix(bytes, 0xFF, 0xFE, 0x00, 0x00))
+        {
+            return Encoding.UTF32.GetString(bytes, 4, bytes.Length - 4);
+        }
+
+        if (HasPrefix(bytes, 0xFE, 0xFF))
+        {
+            return Encoding.BigEndianUnicode.GetString(bytes, 2, bytes.Length - 2);
+        }
+
+        if (HasPrefix(bytes, 0xFF, 0xFE))
+        {
+            return Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2);
+        }
+
+        try
+        {
+            return new UTF8Encoding(false, true).GetString(bytes);
+        }
+        catch (DecoderFallbackException)
+        {
+            return Encoding.Default.GetString(bytes);
+        }
+    }
+
+    private static bool HasPrefix(byte[] bytes, params byte[] prefix)
+    {
+        if (bytes.Length < prefix.Length)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < prefix.Length; index++)
+        {
+            if (bytes[index] != prefix[index])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

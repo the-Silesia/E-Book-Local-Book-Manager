@@ -1,0 +1,489 @@
+﻿using Microsoft.Data.Sqlite;
+using new_project.Models;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Windows.Storage;
+
+namespace new_project.Models.Repository;
+
+public static class DataAccess
+{
+    private const string DatabaseFileName = "books.db";
+    private static readonly SemaphoreSlim InitializationLock = new(1, 1);
+    private static bool _isInitialized;
+
+    private static string DatabasePath => Path.Combine(
+        ApplicationData.Current.LocalFolder.Path,
+        DatabaseFileName);
+
+    public static async Task InitializeAsync()
+    {
+        if (_isInitialized)
+        {
+            return;
+        }
+
+        await InitializationLock.WaitAsync();
+        try
+        {
+            if (_isInitialized)
+            {
+                return;
+            }
+
+            using var connection = CreateConnection();
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                PRAGMA foreign_keys = ON;
+
+                CREATE TABLE IF NOT EXISTS Books (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Title TEXT NOT NULL,
+                    CoverPath TEXT NULL,
+                    DateAdded TEXT NOT NULL,
+                    BookPath TEXT NOT NULL UNIQUE,
+                     Format TEXT NOT NULL DEFAULT 'Text',
+                    IsFavorite INTEGER NOT NULL DEFAULT 0
+                );
+
+                CREATE TABLE IF NOT EXISTS ReadingProgress (
+                    BookId INTEGER PRIMARY KEY,
+                    Progress TEXT NOT NULL DEFAULT '0',
+                    DateLastOpened TEXT NULL,
+                    FOREIGN KEY (BookId) REFERENCES Books(Id) ON DELETE CASCADE
+                );
+
+                CREATE TABLE IF NOT EXISTS BookLists (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ListName TEXT NOT NULL,
+                    BookListPath TEXT NOT NULL UNIQUE,
+                    FutureAccessToken TEXT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS BookListItems (
+                    BookListId INTEGER NOT NULL,
+                    BookId INTEGER NOT NULL,
+                    PRIMARY KEY (BookListId, BookId),
+                    FOREIGN KEY (BookListId) REFERENCES BookLists(Id) ON DELETE CASCADE,
+                    FOREIGN KEY (BookId) REFERENCES Books(Id) ON DELETE CASCADE
+                );
+                """;
+            await command.ExecuteNonQueryAsync();
+            await AddFutureAccessTokenColumnIfNeededAsync(connection);
+            _isInitialized = true;
+        }
+        finally
+        {
+            InitializationLock.Release();
+        }
+    }
+
+    public static async Task<IReadOnlyList<Book>> GetBooksAsync()
+    {
+        await InitializeAsync();
+
+        using var connection = await OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT
+                b.Id,
+                b.Title,
+                b.CoverPath,
+                b.DateAdded,
+                b.BookPath,
+                b.Format,
+                b.IsFavorite,
+                p.Progress,
+                p.DateLastOpened
+            FROM Books AS b
+            LEFT JOIN ReadingProgress AS p ON p.BookId = b.Id
+            ORDER BY COALESCE(p.DateLastOpened, b.DateAdded) DESC;
+            """;
+
+        var books = new List<Book>();
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            books.Add(ReadBook(reader));
+        }
+
+        return books;
+    }
+
+    public static async Task<IReadOnlyList<BookList>> GetBookListsAsync()
+    {
+        await InitializeAsync();
+
+        using var connection = await OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, ListName, BookListPath, FutureAccessToken
+            FROM BookLists
+            ORDER BY ListName COLLATE NOCASE;
+            """;
+
+        var bookLists = new List<BookList>();
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            bookLists.Add(new BookList(
+                reader.GetString(reader.GetOrdinal("BookListPath")),
+                reader.GetString(reader.GetOrdinal("ListName")))
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                FutureAccessToken = ReadNullableString(reader, "FutureAccessToken")
+            });
+        }
+
+        foreach (var bookList in bookLists)
+        {
+            var books = await GetBooksForListAsync(bookList.Id);
+            foreach (var book in books)
+            {
+                bookList.Books.Add(book);
+            }
+        }
+
+        return bookLists;
+    }
+
+    public static Task<BookList> AddOrGetBookListAsync(string folderPath, string listName)
+    {
+        return AddOrGetBookListAsync(folderPath, listName, null);
+    }
+
+    public static async Task<BookList> AddOrGetBookListAsync(
+        string folderPath,
+        string listName,
+        string? futureAccessToken)
+    {
+        await InitializeAsync();
+
+        var fullFolderPath = new DirectoryInfo(folderPath).FullName;
+        using var connection = await OpenConnectionAsync();
+
+        using (var findCommand = connection.CreateCommand())
+        {
+            findCommand.CommandText = """
+                SELECT Id, ListName, BookListPath, FutureAccessToken
+                FROM BookLists
+                WHERE BookListPath = $bookListPath;
+                """;
+            findCommand.Parameters.AddWithValue("$bookListPath", fullFolderPath);
+
+            using var reader = await findCommand.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new BookList(
+                    reader.GetString(reader.GetOrdinal("BookListPath")),
+                    reader.GetString(reader.GetOrdinal("ListName")))
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    FutureAccessToken = ReadNullableString(reader, "FutureAccessToken") ?? futureAccessToken
+                };
+            }
+        }
+
+        using var insertCommand = connection.CreateCommand();
+        insertCommand.CommandText = """
+            INSERT INTO BookLists (ListName, BookListPath, FutureAccessToken)
+            VALUES ($listName, $bookListPath, $futureAccessToken);
+            SELECT last_insert_rowid();
+            """;
+        insertCommand.Parameters.AddWithValue("$listName", listName);
+        insertCommand.Parameters.AddWithValue("$bookListPath", fullFolderPath);
+        insertCommand.Parameters.AddWithValue("$futureAccessToken", (object?)futureAccessToken ?? DBNull.Value);
+        var bookListId = Convert.ToInt32(await insertCommand.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
+
+        return new BookList(fullFolderPath, listName)
+        {
+            Id = bookListId,
+            FutureAccessToken = futureAccessToken
+        };
+    }
+
+    public static async Task UpdateBookListFutureAccessTokenAsync(int bookListId, string futureAccessToken)
+    {
+        await InitializeAsync();
+
+        using var connection = await OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = "UPDATE BookLists SET FutureAccessToken = $futureAccessToken WHERE Id = $id;";
+        command.Parameters.AddWithValue("$futureAccessToken", futureAccessToken);
+        command.Parameters.AddWithValue("$id", bookListId);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public static async Task AddBookToListAsync(int bookListId, int bookId)
+    {
+        await InitializeAsync();
+
+        using var connection = await OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT OR IGNORE INTO BookListItems (BookListId, BookId)
+            VALUES ($bookListId, $bookId);
+            """;
+        command.Parameters.AddWithValue("$bookListId", bookListId);
+        command.Parameters.AddWithValue("$bookId", bookId);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public static async Task<Book?> GetBookAsync(int id)
+    {
+        await InitializeAsync();
+
+        using var connection = await OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT
+                b.Id,
+                b.Title,
+                b.CoverPath,
+                b.DateAdded,
+                b.BookPath,
+                b.Format,
+                b.IsFavorite,
+                p.Progress,
+                p.DateLastOpened
+            FROM Books AS b
+            LEFT JOIN ReadingProgress AS p ON p.BookId = b.Id
+            WHERE b.Id = $id;
+            """;
+        command.Parameters.AddWithValue("$id", id);
+
+        using var reader = await command.ExecuteReaderAsync();
+        return await reader.ReadAsync() ? ReadBook(reader) : null;
+    }
+
+    public static Task<Book> AddOrGetBookAsync(string title, string bookPath)
+    {
+        return AddOrGetBookAsync(title, bookPath, BookFormat.Text, null);
+    }
+
+    public static async Task<Book> AddOrGetBookAsync(
+        string title,
+        string bookPath,
+        BookFormat format,
+        string? coverPath)
+    {
+        await InitializeAsync();
+
+        var fullPath = Path.GetFullPath(bookPath);
+        using var connection = await OpenConnectionAsync();
+
+        using (var findCommand = connection.CreateCommand())
+        {
+            findCommand.CommandText = "SELECT Id FROM Books WHERE BookPath = $bookPath;";
+            findCommand.Parameters.AddWithValue("$bookPath", fullPath);
+            var existingId = await findCommand.ExecuteScalarAsync();
+            if (existingId is not null && existingId != DBNull.Value)
+            {
+                return (await GetBookAsync(Convert.ToInt32(existingId, CultureInfo.InvariantCulture)))!;
+            }
+        }
+
+        using var transaction = connection.BeginTransaction();
+        using (var insertCommand = connection.CreateCommand())
+        {
+            insertCommand.Transaction = transaction;
+            insertCommand.CommandText = """
+                INSERT INTO Books (Title, DateAdded, BookPath)
+                VALUES ($title, $dateAdded, $bookPath);
+                """;
+            insertCommand.Parameters.AddWithValue("$title", title);
+            insertCommand.Parameters.AddWithValue("$dateAdded", FormatDate(DateTime.Now));
+            insertCommand.Parameters.AddWithValue("$bookPath", fullPath);
+            await insertCommand.ExecuteNonQueryAsync();
+        }
+
+        long bookId;
+        using (var idCommand = connection.CreateCommand())
+        {
+            idCommand.Transaction = transaction;
+            idCommand.CommandText = "SELECT last_insert_rowid();";
+            bookId = (long)(await idCommand.ExecuteScalarAsync())!;
+        }
+
+        using (var progressCommand = connection.CreateCommand())
+        {
+            progressCommand.Transaction = transaction;
+            progressCommand.CommandText = """
+                INSERT INTO ReadingProgress (BookId, Progress)
+                VALUES ($bookId, '0');
+                """;
+            progressCommand.Parameters.AddWithValue("$bookId", bookId);
+            await progressCommand.ExecuteNonQueryAsync();
+        }
+
+        await transaction.CommitAsync();
+        return (await GetBookAsync(Convert.ToInt32(bookId, CultureInfo.InvariantCulture)))!;
+    }
+
+    public static async Task UpdateReadingProgressAsync(int bookId, string progress, DateTime lastOpened)
+    {
+        await InitializeAsync();
+
+        using var connection = await OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO ReadingProgress (BookId, Progress, DateLastOpened)
+            VALUES ($bookId, $progress, $lastOpened)
+            ON CONFLICT(BookId) DO UPDATE SET
+                Progress = excluded.Progress,
+                DateLastOpened = excluded.DateLastOpened;
+            """;
+        command.Parameters.AddWithValue("$bookId", bookId);
+        command.Parameters.AddWithValue("$progress", progress);
+        command.Parameters.AddWithValue("$lastOpened", FormatDate(lastOpened));
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task<IReadOnlyList<Book>> GetBooksForListAsync(int bookListId)
+    {
+        using var connection = await OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT
+                b.Id,
+                b.Title,
+                b.CoverPath,
+                b.DateAdded,
+                b.BookPath,
+                b.Format,
+                b.IsFavorite,
+                p.Progress,
+                p.DateLastOpened
+            FROM Books AS b
+            INNER JOIN BookListItems AS i ON i.BookId = b.Id
+            LEFT JOIN ReadingProgress AS p ON p.BookId = b.Id
+            WHERE i.BookListId = $bookListId
+            ORDER BY b.Title COLLATE NOCASE;
+            """;
+        command.Parameters.AddWithValue("$bookListId", bookListId);
+
+        var books = new List<Book>();
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            books.Add(ReadBook(reader));
+        }
+
+        return books;
+    }
+
+    public static async Task UpdateFavoriteAsync(int bookId, bool isFavorite)
+    {
+        await InitializeAsync();
+
+        using var connection = await OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = "UPDATE Books SET IsFavorite = $isFavorite WHERE Id = $id;";
+        command.Parameters.AddWithValue("$isFavorite", isFavorite ? 1 : 0);
+        command.Parameters.AddWithValue("$id", bookId);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private static SqliteConnection CreateConnection()
+    {
+        return new SqliteConnection($"Data Source={DatabasePath}");
+    }
+
+    private static async Task<SqliteConnection> OpenConnectionAsync()
+    {
+        var connection = CreateConnection();
+        await connection.OpenAsync();
+        return connection;
+    }
+
+    private static Book ReadBook(SqliteDataReader reader)
+    {
+        var book = new Book(
+            reader.GetInt32(reader.GetOrdinal("Id")),
+            reader.GetString(reader.GetOrdinal("Title")),
+            reader.GetString(reader.GetOrdinal("BookPath")),
+            ParseBookFormat(ReadNullableString(reader, "Format")))
+        {
+            CoverPath = ReadNullableString(reader, "CoverPath"),
+            DateAdded = ParseDate(reader.GetString(reader.GetOrdinal("DateAdded"))),
+            ReadingProgress = ReadNullableString(reader, "Progress") ?? "0",
+            DateLastOpened = ReadNullableDate(reader, "DateLastOpened"),
+            IsFavorite = reader.GetInt32(reader.GetOrdinal("IsFavorite")) != 0
+        };
+
+        return book;
+    }
+
+    private static async Task AddFormatColumnIfNeededAsync(SqliteConnection connection)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info(Books);";
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            if (string.Equals(reader.GetString(1), "Format", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+
+        await reader.DisposeAsync();
+        using var alterCommand = connection.CreateCommand();
+        alterCommand.CommandText = "ALTER TABLE Books ADD COLUMN Format TEXT NOT NULL DEFAULT 'Text';";
+        await alterCommand.ExecuteNonQueryAsync();
+    }
+
+    private static async Task AddFutureAccessTokenColumnIfNeededAsync(SqliteConnection connection)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info(BookLists);";
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            if (string.Equals(reader.GetString(1), "FutureAccessToken", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+
+        await reader.DisposeAsync();
+        using var alterCommand = connection.CreateCommand();
+        alterCommand.CommandText = "ALTER TABLE BookLists ADD COLUMN FutureAccessToken TEXT NULL;";
+        await alterCommand.ExecuteNonQueryAsync();
+    }
+
+    private static BookFormat ParseBookFormat(string? value)
+    {
+        return Enum.TryParse<BookFormat>(value, true, out var format)
+            ? format
+            : BookFormat.Unknown;
+    }
+
+    private static string? ReadNullableString(SqliteDataReader reader, string columnName)
+    {
+        var ordinal = reader.GetOrdinal(columnName);
+        return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+    }
+
+    private static DateTime? ReadNullableDate(SqliteDataReader reader, string columnName)
+    {
+        var value = ReadNullableString(reader, columnName);
+        return value is null ? null : ParseDate(value);
+    }
+
+    private static string FormatDate(DateTime value)
+    {
+        return value.ToString("O", CultureInfo.InvariantCulture);
+    }
+
+    private static DateTime ParseDate(string value)
+    {
+        return DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+    }
+}

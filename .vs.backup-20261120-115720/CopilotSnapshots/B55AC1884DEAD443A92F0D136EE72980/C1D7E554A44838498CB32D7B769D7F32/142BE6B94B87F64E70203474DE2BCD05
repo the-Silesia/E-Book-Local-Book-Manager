@@ -1,0 +1,127 @@
+﻿using new_project.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Threading.Tasks;
+using Windows.Storage;
+
+namespace new_project.Services;
+
+public sealed class BookScanner
+{
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp"
+    };
+
+    private static readonly HashSet<string> DocumentExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".txt",
+        ".pdf",
+        ".epub"
+    };
+
+    public async Task<IReadOnlyList<BookScanResult>> ScanAsync(string folderPath)
+    {
+        var fullFolderPath = Path.GetFullPath(folderPath);
+        var results = new List<BookScanResult>();
+        await ScanDirectoryAsync(fullFolderPath, results, null);
+
+        foreach (var childDirectory in Directory.EnumerateDirectories(fullFolderPath).OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            await ScanDirectoryAsync(childDirectory, results, null);
+        }
+
+        return results;
+    }
+
+    private async Task ScanDirectoryAsync(
+        string directoryPath,
+        List<BookScanResult> results,
+        string? titleOverride)
+    {
+        var files = Directory.EnumerateFiles(directoryPath)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var imagePaths = new List<string>();
+
+        foreach (var filePath in files)
+        {
+            var extension = Path.GetExtension(filePath);
+            if (ImageExtensions.Contains(extension))
+            {
+                imagePaths.Add(filePath);
+                continue;
+            }
+
+            if (DocumentExtensions.Contains(extension))
+            {
+                var fallbackTitle = Path.GetFileNameWithoutExtension(filePath);
+                var title = await BookMetadataReader.ReadTitleAsync(filePath, fallbackTitle);
+                results.Add(new BookScanResult
+                {
+                    Format = GetDocumentFormat(extension),
+                    Title = title,
+                    BookPath = filePath
+                });
+                continue;
+            }
+
+            if (extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                await ScanArchiveAsync(filePath, results);
+            }
+        }
+
+        if (imagePaths.Count > 0)
+        {
+            var fallbackTitle = titleOverride ?? new DirectoryInfo(directoryPath).Name;
+            results.Add(new BookScanResult
+            {
+                Format = BookFormat.ImageCollection,
+                Title = fallbackTitle,
+                BookPath = directoryPath,
+                CoverPath = imagePaths[0],
+                ImagePaths = imagePaths
+            });
+        }
+    }
+
+    private static async Task ScanArchiveAsync(string archivePath, List<BookScanResult> results)
+    {
+        var cacheRoot = await ApplicationData.Current.LocalCacheFolder.CreateFolderAsync(
+            "ImportedBooks",
+            CreationCollisionOption.OpenIfExists);
+        var extractionPath = Path.Combine(cacheRoot.Path, Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(extractionPath);
+
+        ZipFile.ExtractToDirectory(archivePath, extractionPath);
+
+        var scanner = new BookScanner();
+        await scanner.ScanDirectoryAsync(
+            extractionPath,
+            results,
+            Path.GetFileNameWithoutExtension(archivePath));
+
+        foreach (var childDirectory in Directory.EnumerateDirectories(extractionPath).OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            await scanner.ScanDirectoryAsync(childDirectory, results, null);
+        }
+    }
+
+    private static BookFormat GetDocumentFormat(string extension)
+    {
+        return extension.ToLowerInvariant() switch
+        {
+            ".txt" => BookFormat.Text,
+            ".pdf" => BookFormat.Pdf,
+            ".epub" => BookFormat.Epub,
+            _ => BookFormat.Unknown
+        };
+    }
+}

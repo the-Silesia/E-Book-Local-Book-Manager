@@ -1,0 +1,17 @@
+﻿using new_project.Models;
+using System.Collections.Generic;
+
+namespace new_project.Services;
+
+public sealed class BookScanResult
+{
+    public BookFormat Format { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string BookPath { get; init; } = string.Empty;
+    public string RelativePath { get; init; } = string.Empty;
+    public string? SourceAccessToken { get; init; }
+    public string? CoverPath { get; init; }
+    public string? CoverRelativePath { get; init; }
+    public IReadOnlyList<string> ImagePaths { get; init; } = [];
+    public IReadOnlyList<string> ImageRelativePaths { get; init; } = [];
+}

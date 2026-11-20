@@ -1,0 +1,432 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="FavoritePage_nullContent_Info_Text.Text" xml:space="preserve">
+    <value>这里是你收藏的项目，不过现在还什么都没有</value>
+  </data>
+  <data name="HomePage_nullContent_Info_Button.Content" xml:space="preserve">
+    <value>选择书籍文件夹</value>
+  </data>
+  <data name="HomePage_nullContent_Info_Text.Text" xml:space="preserve">
+    <value>什么都没有？现在添加你的第一本书</value>
+  </data>
+  <data name="HomePage_Header.Text" xml:space="preserve">
+    <value>书库</value>
+  </data>
+  <data name="HomePage_ImportButton.Content" xml:space="preserve">
+    <value>添加书籍文件夹</value>
+  </data>
+  <data name="ListPage_Header.Text" xml:space="preserve">
+    <value>书单</value>
+  </data>
+  <data name="ListPage_nullContent_Info_Text.Text" xml:space="preserve">
+    <value>还没有添加书单</value>
+  </data>
+  <data name="mainWindowNav_Collection.Content" xml:space="preserve">
+    <value>收藏</value>
+  </data>
+  <data name="mainWindowNav_Collection.ToolTipService.ToolTip" xml:space="preserve">
+    <value>收藏</value>
+  </data>
+  <data name="mainWindowNav_Home.Content" xml:space="preserve">
+    <value>首页</value>
+  </data>
+  <data name="mainWindowNav_Home.ToolTipService.ToolTip" xml:space="preserve">
+    <value>首页</value>
+  </data>
+  <data name="mainWindowNav_List.Content" xml:space="preserve">
+    <value>详情</value>
+  </data>
+  <data name="mainWindowNav_List.ToolTipService.ToolTip" xml:space="preserve">
+    <value>详情</value>
+  </data>
+  <data name="mainWindowSearchingBox.PlaceholderText" xml:space="preserve">
+    <value>搜索...</value>
+  </data>
+  <data name="mainWindowTitleBar.Title" xml:space="preserve">
+    <value>E-Book</value>
+  </data>
+  <data name="HomePage_AppBarButton_Sort.Label" xml:space="preserve">
+    <value>排序</value>
+  </data>
+  <data name="HomePage_AppBarButton_Bookmarks.Label" xml:space="preserve">
+    <value>筛选</value>
+  </data>
+  <data name="HomePage_AppBarButton_Refresh.Label" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="HomePage_AppBarButton_Add.Label" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="HomePage_AppBarButton_Sort_SortByLastReadTime.Text" xml:space="preserve">
+    <value>按最后阅读时间排序</value>
+  </data>
+  <data name="HomePage_AppBarButton_Sort_SortByTime_LASTtoEARLY.Text" xml:space="preserve">
+    <value>按添加时间排序（从后往前）</value>
+  </data>
+  <data name="HomePage_AppBarButton_Sort_SortByTime_EARLYtoLAST.Text" xml:space="preserve">
+    <value>按添加时间排序（从前往后）</value>
+  </data>
+  <data name="HomePage_AppBarButton_Sort_SortByName_AtoZ.Text" xml:space="preserve">
+    <value>按名称排序（A-Z）</value>
+  </data>
+  <data name="HomePage_AppBarButton_Sort_SortByName_ZtoA.Text" xml:space="preserve">
+    <value>按名称排序（Z-A）</value>
+  </data>
+  <data name="HomePage_ContentDialog_ScanResult_Title" xml:space="preserve">
+    <value>扫描结果</value>
+  </data>
+  <data name="HomePage_ContentDialog_ScanResult_Content" xml:space="preserve">
+    <value>该目录下扫描到 {0} 个项目</value>
+  </data>
+  <data name="HomePage_ContentDialog_ScanResult_PrimaryButtonText" xml:space="preserve">
+    <value>确认添加</value>
+  </data>
+  <data name="HomePage_ContentDialog_ScanResult_CloseButtonText" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="HomePage_ContentDialog_ScanProgress_Title" xml:space="preserve">
+    <value>正在扫描</value>
+  </data>
+  <data name="HomePage_ContentDialog_ImportError_Title" xml:space="preserve">
+    <value>导入失败</value>
+  </data>
+  <data name="HomePage_ContentDialog_ImportError_CloseButtonText" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="HomePage_BookListFilter_All_Text" xml:space="preserve">
+    <value>全部书单</value>
+  </data>
+  <data name="mainWindow_Title" xml:space="preserve">
+    <value>E-Book</value>
+  </data>
+  <data name="ReaderPage_ContentDialog_ReadError_Title" xml:space="preserve">
+    <value>阅读失败</value>
+  </data>
+  <data name="ReaderPage_ContentDialog_ReadError_CloseButtonText" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="ReaderPage_Error_InvalidBookParameter" xml:space="preserve">
+    <value>无法确定要打开的书籍。</value>
+  </data>
+  <data name="ReaderPage_Error_BookNotFound" xml:space="preserve">
+    <value>找不到这本书的记录。</value>
+  </data>
+  <data name="ReaderPage_Error_OpenBook" xml:space="preserve">
+    <value>无法打开书籍：{0}</value>
+  </data>
+  <data name="ReaderPage_Error_RestoreBookFile" xml:space="preserve">
+    <value>无法通过 FutureAccessList 恢复书籍文件，请重新导入或重新定位书籍。</value>
+  </data>
+  <data name="BooksViewModel_Error_SaveFolderAccess" xml:space="preserve">
+    <value>无法保存所选文件夹的访问授权。</value>
+  </data>
+  <data name="BooksViewModel_Error_NoBooksFound" xml:space="preserve">
+    <value>所选文件夹中没有可识别的书籍文件。{0}{1}</value>
+  </data>
+  <data name="BookScanner_Error_DuplicateArchivePath" xml:space="preserve">
+    <value>压缩包包含重复或大小写冲突的路径。</value>
+  </data>
+  <data name="BookScanner_Error_InvalidArchivePath" xml:space="preserve">
+    <value>压缩包包含无效路径。</value>
+  </data>
+  <data name="ListPage_ContextMenu_Refresh.Text" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="ListPage_ContextMenu_Rename.Text" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="ListPage_ContextMenu_Delete.Text" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="ListPage_ContentDialog_Import_Title" xml:space="preserve">
+    <value>扫描结果</value>
+  </data>
+  <data name="ListPage_ContentDialog_Import_Content" xml:space="preserve">
+    <value>该目录下扫描到 {0} 个项目</value>
+  </data>
+  <data name="ListPage_ContentDialog_Import_PrimaryButtonText" xml:space="preserve">
+    <value>确认添加</value>
+  </data>
+  <data name="ListPage_ContentDialog_Import_CloseButtonText" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="ListPage_ContentDialog_Rename_Title" xml:space="preserve">
+    <value>重命名书单</value>
+  </data>
+  <data name="ListPage_ContentDialog_Rename_PrimaryButtonText" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="ListPage_ContentDialog_Rename_CloseButtonText" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="ListPage_ContentDialog_Delete_Title" xml:space="preserve">
+    <value>删除书单</value>
+  </data>
+  <data name="ListPage_ContentDialog_Delete_Content" xml:space="preserve">
+    <value>确定要删除书单“{0}”吗？这不会删除文件本体。</value>
+  </data>
+  <data name="ListPage_ContentDialog_Delete_PrimaryButtonText" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="ListPage_ContentDialog_Delete_CloseButtonText" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="ListPage_ContentDialog_Error_Title" xml:space="preserve">
+    <value>操作失败</value>
+  </data>
+  <data name="ListPage_ContentDialog_Error_CloseButtonText" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="BooksViewModel_Error_EmptyBookListName" xml:space="preserve">
+    <value>书单名称不能为空。</value>
+  </data>
+  <data name="ListPage_AddButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="Reader_PreviousPageButton.AutomationProperties.Name" xml:space="preserve">
+    <value>上一页</value>
+  </data>
+  <data name="Reader_PreviousPageButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>上一页</value>
+  </data>
+  <data name="Reader_NextPageButton.AutomationProperties.Name" xml:space="preserve">
+    <value>下一页</value>
+  </data>
+  <data name="Reader_NextPageButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>下一页</value>
+  </data>
+  <data name="ReaderPage_PageIndicator" xml:space="preserve">
+    <value>第 {0} / {1} 页</value>
+  </data>
+  <data name="ReaderPage_PageCount" xml:space="preserve">
+    <value>/ {0} 页</value>
+  </data>
+  <data name="ReaderPage_Error_UnsupportedFormat" xml:space="preserve">
+    <value>当前格式暂不支持阅读。</value>
+  </data>
+  <data name="ReaderPage_Error_NoImages" xml:space="preserve">
+    <value>没有找到可阅读的图片。</value>
+  </data>
+  <data name="ReaderPage_Error_NoPages" xml:space="preserve">
+    <value>文档中没有可阅读的页面。</value>
+  </data>
+  <data name="ReaderPage_Error_ImageNotFound" xml:space="preserve">
+    <value>找不到当前图片页面。</value>
+  </data>
+  <data name="mainWindowTitleBar.Subtitle" xml:space="preserve">
+    <value>本地书籍管理器</value>
+  </data>
+  <data name="HomePage_BookToolTip_ReadingProgress" xml:space="preserve">
+    <value>阅读进度：{0}</value>
+  </data>
+  <data name="HomePage_BookToolTip_LastOpened" xml:space="preserve">
+    <value>最后打开：{0}</value>
+  </data>
+  <data name="HomePage_BookToolTip_LastOpenedHours" xml:space="preserve">
+    <value>最后打开：{0}小时前</value>
+  </data>
+  <data name="HomePage_BookToolTip_LastOpenedMinutes" xml:space="preserve">
+    <value>最后打开：{0}分钟前</value>
+  </data>
+  <data name="HomePage_BookToolTip_LastOpenedWithinMinute" xml:space="preserve">
+    <value>最后打开：一分钟内</value>
+  </data>
+  <data name="SettingsPage_Header_Title.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="SettingsPage_ThemeCard.Header" xml:space="preserve">
+    <value>主题</value>
+  </data>
+  <data name="SettingsPage_ThemeCard.Description" xml:space="preserve">
+    <value>浅色/深色/跟随系统</value>
+  </data>
+  <data name="SettingsPage_BackgroundCard.Header" xml:space="preserve">
+    <value>背景</value>
+  </data>
+  <data name="SettingsPage_BackgroundCard.Description" xml:space="preserve">
+    <value>Mica/Mica Alt/Acrylic/Acrylic Thin</value>
+  </data>
+  <data name="SettingsPage_ReaderOpenModeCard.Header" xml:space="preserve">
+    <value>阅读打开方式</value>
+  </data>
+  <data name="SettingsPage_ReaderOpenModeCard.Description" xml:space="preserve">
+    <value>开启后将在独立页面中打开书本</value>
+  </data>
+  <data name="SettingsPage_CoverCacheCard.Header" xml:space="preserve">
+    <value>封面缓存</value>
+  </data>
+  <data name="SettingsPage_CoverCacheCard.Description" xml:space="preserve">
+    <value>管理应用生成的封面缓存</value>
+  </data>
+  <data name="SettingsPage_OpenCacheFolderButton.Content" xml:space="preserve">
+    <value>打开缓存文件夹</value>
+  </data>
+  <data name="SettingsPage_ClearCoverCacheButton.Content" xml:space="preserve">
+    <value>清理封面缓存</value>
+  </data>
+  <data name="SettingsPage_ThemeOption_System" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="SettingsPage_ThemeOption_Light" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="SettingsPage_ThemeOption_Dark" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="SettingsPage_BackdropOption_Mica" xml:space="preserve">
+    <value>Mica</value>
+  </data>
+  <data name="SettingsPage_BackdropOption_MicaAlt" xml:space="preserve">
+    <value>Mica Alt</value>
+  </data>
+  <data name="SettingsPage_BackdropOption_Acrylic" xml:space="preserve">
+    <value>Acrylic</value>
+  </data>
+  <data name="SettingsPage_BackdropOption_AcrylicThin" xml:space="preserve">
+    <value>Acrylic Thin</value>
+  </data>
+  <data name="SettingsPage_ReaderOpenModeOption_ReaderWindow" xml:space="preserve">
+    <value>独立窗口</value>
+  </data>
+  <data name="SettingsPage_ReaderOpenModeOption_MainWindow" xml:space="preserve">
+    <value>嵌入主窗口</value>
+  </data>
+  <data name="SettingsPage_ClearCoverCacheDialog_Title" xml:space="preserve">
+    <value>清理封面缓存</value>
+  </data>
+  <data name="SettingsPage_ClearCoverCacheDialog_Content" xml:space="preserve">
+    <value>确定要删除应用生成的所有封面缓存吗？书籍源文件和数据库不会受到影响。</value>
+  </data>
+  <data name="SettingsPage_ClearCoverCacheDialog_PrimaryButtonText" xml:space="preserve">
+    <value>清理</value>
+  </data>
+  <data name="SettingsPage_ClearCoverCacheDialog_CloseButtonText" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="SettingsPage_ClearCoverCacheErrorDialog_Title" xml:space="preserve">
+    <value>清理失败</value>
+  </data>
+  <data name="SettingsPage_ClearCoverCacheErrorDialog_CloseButtonText" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="mainWindowSearchingBox.PlaceholderText" xml:space="preserve">
+    <value>搜索当前页面书籍</value>
+  </data>
+</root>

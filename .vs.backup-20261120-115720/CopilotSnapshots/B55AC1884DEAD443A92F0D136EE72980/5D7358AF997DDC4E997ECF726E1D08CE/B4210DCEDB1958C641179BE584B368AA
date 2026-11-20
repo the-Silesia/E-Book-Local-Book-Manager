@@ -1,0 +1,23 @@
+﻿//using System;
+//using System.IO;
+//using Microsoft.Data.Sqlite;
+//using System.Collections.Generic;
+//using Windows.Storage;
+
+//namespace new_project.Models.Repository;
+
+//public static class DataAccess
+//{
+//    public async static void InitializeDatabase()
+//    {
+//        await ApplicationData.Current.LocalFolder.CreateFileAsync("sqliteBookdata.db", CreationCollisionOption.OpenIfExists);
+//        string dbpath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "sqliteBookdata.db");
+//        using (var db = new SqliteConnection($"Filename={dbpath}"))
+//        {
+//            db.Open();
+//            string tableCommmand = "CREATE TABLE IF NOT " + "EXISTS MyTable (Primary_Key INTEGER PRIMARY KEY, " + "Text_Entry NVARCHAR(2048) NULL)";
+//            var createTable = new SqliteCommand(tableCommmand, db);
+//            createTable.ExecuteReader();
+//        }
+//    }
+//}

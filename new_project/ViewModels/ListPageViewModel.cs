@@ -1,0 +1,80 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using new_project.Models;
+using new_project.Services;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using Windows.Storage;
+
+namespace new_project.ViewModels;
+
+public partial class ListPageViewModel : ObservableObject
+{
+    private readonly BooksViewModel _libraryViewModel;
+
+    public ObservableCollection<BookList> BookLists => _libraryViewModel.BookLists;
+
+    [ObservableProperty]
+    public partial bool HasBookLists { get; set; }
+
+    public ListPageViewModel(BooksViewModel libraryViewModel)
+    {
+        _libraryViewModel = libraryViewModel;
+        _libraryViewModel.PropertyChanged += LibraryViewModel_PropertyChanged;
+        _libraryViewModel.BookLists.CollectionChanged += BookLists_CollectionChanged;
+        UpdateState();
+    }
+
+    public Task LoadAsync()
+    {
+        return _libraryViewModel.LoadAsync();
+    }
+
+    public Task RefreshAsync()
+    {
+        return _libraryViewModel.RefreshBookListsAsync();
+    }
+
+    public Task<IReadOnlyList<BookScanResult>> ScanBookListAsync(
+        StorageFolder folder,
+        string futureAccessToken)
+    {
+        return _libraryViewModel.ScanBookListAsync(folder, futureAccessToken);
+    }
+
+    public Task<BookList> ImportBookListAsync(
+        StorageFolder folder,
+        string futureAccessToken,
+        IReadOnlyList<BookScanResult> scanResults)
+    {
+        return _libraryViewModel.ImportBookListAsync(folder, futureAccessToken, scanResults);
+    }
+
+    public Task RenameAsync(BookList bookList, string listName)
+    {
+        return _libraryViewModel.RenameBookListAsync(bookList, listName);
+    }
+
+    public Task DeleteAsync(BookList bookList)
+    {
+        return _libraryViewModel.DeleteBookListAsync(bookList);
+    }
+
+    private void LibraryViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(BooksViewModel.HasBookLists) or nameof(BooksViewModel.IsLoading))
+        {
+            UpdateState();
+        }
+    }
+
+    private void BookLists_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        UpdateState();
+    }
+
+    private void UpdateState()
+    {
+        HasBookLists = BookLists.Count > 0;
+    }
+}

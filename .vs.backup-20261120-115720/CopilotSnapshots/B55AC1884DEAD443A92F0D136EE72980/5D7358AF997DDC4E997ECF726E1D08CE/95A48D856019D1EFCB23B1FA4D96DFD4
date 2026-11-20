@@ -1,0 +1,15 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using new_project.Models;
+using new_project.Models.Repository;
+using System;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace new_project.ViewModels;
+
+public partial class BooksViewModel : ObservableObject
+{
+
+}
